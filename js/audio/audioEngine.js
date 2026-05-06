@@ -262,6 +262,54 @@ class AudioEngine {
         
         noise.start();
     }
+
+    // --- Hardship Empathy Sounds ---
+    
+    playHeartbeat() {
+        if (!this.ctx || this.isMuted) return;
+        if (this.heartbeatInterval) return; // Already playing
+        
+        console.log("Playing heartbeat...");
+        
+        const beat = () => {
+            if (!this.ctx || this.isMuted) return;
+            
+            // First beat
+            this._synthHeartbeat(0);
+            // Second beat (thump-THUMP)
+            this._synthHeartbeat(0.2);
+            
+            this.heartbeatInterval = setTimeout(beat, 1200); // 1.2s per cycle
+        };
+        
+        beat();
+    }
+    
+    _synthHeartbeat(delay) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(60, this.ctx.currentTime + delay);
+        osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + delay + 0.1);
+        
+        gain.gain.setValueAtTime(0, this.ctx.currentTime + delay);
+        gain.gain.linearRampToValueAtTime(1.5, this.ctx.currentTime + delay + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + delay + 0.2);
+        
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        
+        osc.start(this.ctx.currentTime + delay);
+        osc.stop(this.ctx.currentTime + delay + 0.2);
+    }
+    
+    stopHeartbeat() {
+        if (this.heartbeatInterval) {
+            clearTimeout(this.heartbeatInterval);
+            this.heartbeatInterval = null;
+        }
+    }
 }
 
 const AudioSys = new AudioEngine();
