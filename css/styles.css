@@ -44,6 +44,7 @@ body {
     display: block;
     width: 100%;
     height: 100%;
+    cursor: grab;
 }
 
 /* UI Overlay */
@@ -271,14 +272,18 @@ header p {
 /* Tooltip */
 #tooltip {
     position: absolute;
-    background: rgba(0, 0, 0, 0.9);
-    border: 1px solid var(--accent-gold);
-    padding: 10px 15px;
-    border-radius: 5px;
+    max-width: 280px;
+    background: linear-gradient(135deg, rgba(20,15,8,0.97), rgba(35,22,10,0.95));
+    border: 1px solid rgba(255,180,50,0.4);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 12px rgba(255,180,50,0.1);
+    padding: 14px 18px;
+    border-radius: 10px;
     pointer-events: none;
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.55;
     z-index: 100;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s ease;
+    color: #d0c0a0;
 }
 
 #tooltip.hidden {

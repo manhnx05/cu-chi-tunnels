@@ -19,46 +19,46 @@ const CONFIG = {
         zoomSpeed: 0.2
     },
     
-    // Default camera positions for cinematic phase transitions
+    // Default camera positions for cinematic phase transitions (scaled to new depth)
     CAMERA_VIEWS: [
-        { x: 0, y: 0, zoom: 0.8 },       // Phase 0: Toàn cảnh
-        { x: -100, y: 100, zoom: 1.2 },  // Phase 1: Sinh hoạt (gần bề mặt)
-        { x: 50, y: 250, zoom: 1.5 },    // Phase 2: Chống càn (Hầm chông)
-        { x: 0, y: 50, zoom: 1.1 },      // Phase 3: Xuất kích (Mặt đất)
-        { x: -150, y: 350, zoom: 1.2 },  // Phase 4: Di tích
-        { x: 150, y: 800, zoom: 1.5 }    // Phase 5: Đào hầm (Sâu nhất)
+        { x:    0, y:    0, zoom: 0.65 }, // Phase 0: Toàn cảnh
+        { x: -100, y:  200, zoom: 1.0  }, // Phase 1: Sinh hoạt (tầng 1)
+        { x:   50, y:  450, zoom: 1.3  }, // Phase 2: Chống càn (hầm chông)
+        { x:    0, y:   60, zoom: 0.9  }, // Phase 3: Xuất kích (mặt đất)
+        { x: -200, y:  300, zoom: 1.1  }, // Phase 4: Di tích
+        { x:  100, y: 1400, zoom: 1.5  }  // Phase 5: Đào hầm (tầng 3 sâu nhất)
     ],
 
-    // World depths (in game units, 1 unit roughly = 1cm, so 3m = 300 units)
+    // World depths — 1 unit ≈ 0.5cm → 3m = 600 units
     DEPTHS: {
         SURFACE: 0,
-        LEVEL_1: -300, // 3 meters deep
-        LEVEL_2: -600, // 6 meters deep
-        LEVEL_3: -1000 // 10 meters deep
+        LEVEL_1: -600,  // ~3m
+        LEVEL_2: -1200, // ~6m
+        LEVEL_3: -2000  // ~10m
     },
 
     // Colors
     COLORS: {
-        BACKGROUND: "#121212",
-        SURFACE: "#2e3b32", // Rừng rậm
+        BACKGROUND: "#0a0a0c",
+        SURFACE: "#2d4a1e",
         EARTH_1: "#4a3728",
-        EARTH_2: "#3e2723",
-        EARTH_3: "#2d1b18",
-        
-        // Entitites
-        VC_DOT: "rgba(25, 118, 210, 0.8)", // Blue glowing dots for guerilla
-        ENEMY_DOT: "rgba(211, 47, 47, 0.8)", // Red glowing dots for tunnel rats
-        TOURIST_DOT: "rgba(255, 255, 255, 0.8)", // White dots for tourists
-        DIGGER_DOT: "rgba(255, 152, 0, 0.8)", // Orange dots for diggers
-        
+        EARTH_2: "#3a2215",
+        EARTH_3: "#21100a",
+
+        // Entities
+        VC_DOT:      "rgba(30, 130, 230, 0.9)",
+        ENEMY_DOT:   "rgba(230,  50,  50, 0.9)",
+        TOURIST_DOT: "rgba(255, 255, 255, 0.9)",
+        DIGGER_DOT:  "rgba(255, 165,   0, 0.9)",
+
         // Structures
-        TUNNEL_WALL: "#1a100b",
-        TUNNEL_FLOOR: "#5d4037",
-        
+        TUNNEL_WALL:  "#1a100b",
+        TUNNEL_FLOOR: "#3d2410",
+
         // Effects
-        SMOKE: "rgba(200, 200, 200, 0.3)",
+        SMOKE:     "rgba(180,180,170,0.35)",
         EXPLOSION: "#ffb300",
-        BLOOD: "#b71c1c"
+        BLOOD:     "#b71c1c"
     },
 
     // Audio settings
