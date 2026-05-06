@@ -174,6 +174,36 @@ class AudioEngine {
             time += 0.12; // Time between shots
         }
     }
+
+    // Synthesize birds chirping for Phase 4 (Peace/Tourism)
+    playNatureAmbient() {
+        if (!this.ctx || this.isMuted) return;
+        
+        // High-pitched sine wave with frequency modulation
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        osc.type = 'sine';
+        
+        // Random bird chirp pattern
+        let time = this.ctx.currentTime;
+        for (let i = 0; i < 5; i++) {
+            osc.frequency.setValueAtTime(3000 + Math.random() * 1000, time);
+            osc.frequency.exponentialRampToValueAtTime(4000 + Math.random() * 1000, time + 0.1);
+            
+            gain.gain.setValueAtTime(0, time);
+            gain.gain.linearRampToValueAtTime(0.5, time + 0.05);
+            gain.gain.linearRampToValueAtTime(0, time + 0.1);
+            
+            time += 0.2 + Math.random() * 0.5; // Random pause between chirps
+        }
+        
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        
+        osc.start(this.ctx.currentTime);
+        osc.stop(time);
+    }
 }
 
 const AudioSys = new AudioEngine();
