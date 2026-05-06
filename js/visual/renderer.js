@@ -99,16 +99,18 @@ class RendererEngine {
     }
 
     renderLighting() {
-        // Darkness is active in underground/combat phases (1, 2, 3, 5)
+        const isRealistic = (typeof State !== 'undefined') && State.get('realisticMode');
+        // Darkness is active in underground/combat phases (1, 2, 3, 5) or Realistic Mode
         const phase = (typeof window.AppInstance !== 'undefined') ? window.AppInstance.currentPhase : 0;
-        const isDarkPhase = [1, 2, 3, 5].includes(phase);
+        const isDarkPhase = [1, 2, 3, 5].includes(phase) || isRealistic;
         
         if (!isDarkPhase) return;
 
         Canvas.ctx.save();
         
         // Draw full screen darkness overlay
-        Canvas.ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+        // In realistic mode, the darkness is pitch black ("Black Echo")
+        Canvas.ctx.fillStyle = isRealistic ? 'rgba(0, 0, 0, 0.98)' : 'rgba(0, 0, 0, 0.85)';
         Canvas.ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
         
         // Cut out holes for lights
@@ -122,11 +124,15 @@ class RendererEngine {
                 // Flicker Effect using Math.sin and time
                 const time = Date.now() / 150;
                 const flicker = Math.sin(time + node.x) * 0.05 + Math.sin(time * 0.7 + node.y) * 0.05;
-                const radius = (160 + flicker * 25) * CONFIG.CAMERA.zoom; // Increased from 120 for better lighting
+                
+                // In realistic mode, lights are much smaller (oil lamps)
+                const baseRadius = isRealistic ? 60 : 160;
+                const flickerAmt = isRealistic ? 10 : 25;
+                const radius = (baseRadius + flicker * flickerAmt) * CONFIG.CAMERA.zoom;
                 
                 const grad = Canvas.ctx.createRadialGradient(screenPos.x, screenPos.y, 0, screenPos.x, screenPos.y, radius);
                 grad.addColorStop(0, `rgba(255, 220, 150, ${1.2 + flicker})`); // Brighter center
-                grad.addColorStop(0.5, `rgba(255, 200, 120, ${0.4 + flicker * 0.5})`); // Mid-tone
+                grad.addColorStop(isRealistic ? 0.2 : 0.5, `rgba(255, 200, 120, ${0.4 + flicker * 0.5})`); // Mid-tone
                 grad.addColorStop(1, 'rgba(255, 220, 150, 0)');
                 
                 Canvas.ctx.beginPath();
