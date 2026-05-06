@@ -32,7 +32,7 @@ class EntityManager {
                 
                 // If it's an enemy reaching a trap (ham_chong), trigger it!
                 if (ent.type === 'enemy' && ent.end.type === 'trap') {
-                    AudioSys.playTrapSound();
+                    AudioSys.playTrapSound(ent.end.x, ent.end.y);
                     
                     // Spawn some dirt/blood particles
                     for(let j = 0; j < 10; j++) {
@@ -61,15 +61,36 @@ class EntityManager {
         for (const ent of this.entities) {
             if (!ent.active) continue;
 
+            // Easing function (easeInOutQuad) for realistic movement
+            let p = ent.progress;
+            if (ent.type !== 'tourist') { // Tourists walk linearly, others sneak
+                p = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+            }
+
             // Interpolate 3D position
-            const x = ent.start.x + (ent.end.x - ent.start.x) * ent.progress;
-            const y = ent.start.y + (ent.end.y - ent.start.y) * ent.progress;
-            const z = ent.start.z + (ent.end.z - ent.start.z) * ent.progress;
+            const x = ent.start.x + (ent.end.x - ent.start.x) * p;
+            const y = ent.start.y + (ent.end.y - ent.start.y) * p;
+            const z = ent.start.z + (ent.end.z - ent.start.z) * p;
 
             const screenPos = Projection.project(x, y, z);
+            
+            // Calculate direction angle on screen
+            const nextX = ent.start.x + (ent.end.x - ent.start.x) * (p + 0.01);
+            const nextY = ent.start.y + (ent.end.y - ent.start.y) * (p + 0.01);
+            const nextZ = ent.start.z + (ent.end.z - ent.start.z) * (p + 0.01);
+            const nextScreen = Projection.project(nextX, nextY, nextZ);
+            
+            const dx = nextScreen.x - screenPos.x;
+            const dy = nextScreen.y - screenPos.y;
+            const angle = Math.atan2(dy, dx);
 
             Canvas.ctx.beginPath();
-            Canvas.ctx.arc(screenPos.x, screenPos.y, 6 * CONFIG.SCALE * CONFIG.CAMERA.zoom, 0, Math.PI * 2);
+            if (ent.type === 'tourist') {
+                Canvas.ctx.arc(screenPos.x, screenPos.y, 6 * CONFIG.SCALE * CONFIG.CAMERA.zoom, 0, Math.PI * 2);
+            } else {
+                // Draw as an oriented ellipse for military entities
+                Canvas.ctx.ellipse(screenPos.x, screenPos.y, 8 * CONFIG.SCALE * CONFIG.CAMERA.zoom, 4 * CONFIG.SCALE * CONFIG.CAMERA.zoom, angle, 0, Math.PI * 2);
+            }
             
             if (ent.type === 'enemy') {
                 Canvas.ctx.fillStyle = CONFIG.COLORS.ENEMY_DOT;
