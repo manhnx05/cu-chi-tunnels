@@ -24,14 +24,14 @@ class App {
         });
 
         // Camera controls
-        document.getElementById('cam-up').addEventListener('click', () => CONFIG.CAMERA.y += CONFIG.CAMERA.moveSpeed);
-        document.getElementById('cam-down').addEventListener('click', () => CONFIG.CAMERA.y -= CONFIG.CAMERA.moveSpeed);
-        document.getElementById('cam-left').addEventListener('click', () => CONFIG.CAMERA.x += CONFIG.CAMERA.moveSpeed);
-        document.getElementById('cam-right').addEventListener('click', () => CONFIG.CAMERA.x -= CONFIG.CAMERA.moveSpeed);
+        document.getElementById('cam-up').addEventListener('click', () => CONFIG.CAMERA.targetY += CONFIG.CAMERA.moveSpeed);
+        document.getElementById('cam-down').addEventListener('click', () => CONFIG.CAMERA.targetY -= CONFIG.CAMERA.moveSpeed);
+        document.getElementById('cam-left').addEventListener('click', () => CONFIG.CAMERA.targetX += CONFIG.CAMERA.moveSpeed);
+        document.getElementById('cam-right').addEventListener('click', () => CONFIG.CAMERA.targetX -= CONFIG.CAMERA.moveSpeed);
         
-        document.getElementById('cam-zoom-in').addEventListener('click', () => CONFIG.CAMERA.zoom += CONFIG.CAMERA.zoomSpeed);
+        document.getElementById('cam-zoom-in').addEventListener('click', () => CONFIG.CAMERA.targetZoom += CONFIG.CAMERA.zoomSpeed);
         document.getElementById('cam-zoom-out').addEventListener('click', () => {
-            CONFIG.CAMERA.zoom = Math.max(0.2, CONFIG.CAMERA.zoom - CONFIG.CAMERA.zoomSpeed);
+            CONFIG.CAMERA.targetZoom = Math.max(0.2, CONFIG.CAMERA.targetZoom - CONFIG.CAMERA.zoomSpeed);
         });
         
         // Init naration text
@@ -52,6 +52,7 @@ class App {
         if (phase === 2) {
             AudioSys.playBombRumble();
             Particles.triggerShake(3000, 15);
+            this.focusOnNode('ham_chong'); // Auto-focus on trap
             
             // Spawn Tunnel Rats down to the trap
             if (typeof Entities !== 'undefined') {
@@ -70,9 +71,9 @@ class App {
                 setTimeout(() => Entities.spawn('vc', 'ham_chi_huy', 'lo_thong_hoi', 3000), 500);
                 setTimeout(() => Entities.spawn('vc', 'bep_hoang_cam', 'lo_thong_hoi', 2000), 1000);
                 
-                // Continuous gunfire
-                setTimeout(() => AudioSys.playGunfire(), 1500);
-                setTimeout(() => AudioSys.playGunfire(), 3200);
+                // Continuous gunfire (random horizontal spread, on surface)
+                setTimeout(() => AudioSys.playGunfire((Math.random() - 0.5) * 400, 0), 1500);
+                setTimeout(() => AudioSys.playGunfire((Math.random() - 0.5) * 400, 0), 3200);
             }
         } else if (phase === 4) {
             // Peace / Tourism
@@ -91,15 +92,15 @@ class App {
                 }, 4000);
             }
         } else if (phase === 5) {
-            // Digging tunnels
-            AudioSys.playDiggingSound();
+            // Digging tunnels (deep underground)
+            AudioSys.playDiggingSound(0, 150);
             
             if (typeof Entities !== 'undefined') {
                 Entities.spawn('digger', 'lo_thong_hoi', 'bep_hoang_cam', 3000); 
                 
                 setInterval(() => {
                     if (this.currentPhase === 5) {
-                        AudioSys.playDiggingSound();
+                        AudioSys.playDiggingSound((Math.random() - 0.5) * 300, 150);
                         if (Math.random() > 0.5) {
                             Entities.spawn('digger', 'lo_thong_hoi', 'bep_hoang_cam', 3000); 
                         } else {
@@ -138,7 +139,23 @@ class App {
         this.isRunning = false;
     }
 
+    focusOnNode(nodeId) {
+        const node = LOCATIONS.find(l => l.id === nodeId);
+        if (node) {
+            // Screen center is 0,0 in offset terms
+            // To focus, we need to shift the target so the node is near center
+            CONFIG.CAMERA.targetX = -node.x;
+            CONFIG.CAMERA.targetY = node.y; // Positive shifts it up
+        }
+    }
+
     update(dt) {
+        // Camera Lerp
+        const lerpSpeed = 1.0 - Math.pow(0.001, dt / 1000); // Time-independent lerp
+        CONFIG.CAMERA.x += (CONFIG.CAMERA.targetX - CONFIG.CAMERA.x) * lerpSpeed;
+        CONFIG.CAMERA.y += (CONFIG.CAMERA.targetY - CONFIG.CAMERA.y) * lerpSpeed;
+        CONFIG.CAMERA.zoom += (CONFIG.CAMERA.targetZoom - CONFIG.CAMERA.zoom) * lerpSpeed;
+
         // Continuous effects based on phase
         if (this.currentPhase === 1 || this.currentPhase === 2) {
             // Bếp Hoàng Cầm emits smoke
@@ -186,5 +203,6 @@ class App {
 // Bootstrap
 window.onload = () => {
     const simulation = new App();
+    window.AppInstance = simulation; // Expose globally
     simulation.init();
 };
