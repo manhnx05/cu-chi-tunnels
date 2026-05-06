@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Địa đạo Củ Chi 3D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- UI Overlay Layer -->
+    <div id="ui-container">
+        <!-- Header / Title -->
+        <header>
+            <h1>ĐỊA ĐẠO CỦ CHI</h1>
+            <p>Mô phỏng mặt cắt 3D hệ thống ngầm</p>
+        </header>
+
+        <!-- Phase Controls -->
+        <nav id="phase-panel">
+            <button class="phase-btn active" data-phase="0">0. Toàn cảnh</button>
+            <button class="phase-btn" data-phase="1">1. Sinh hoạt & Ngụy trang</button>
+            <button class="phase-btn" data-phase="2">2. Chống càn quét (Cedar Falls)</button>
+            <button class="phase-btn" data-phase="3">3. Xuất kích tiến công</button>
+        </nav>
+
+        <!-- Information Panel -->
+        <aside id="info-panel">
+            <h2 id="info-title">Tam giác sắt</h2>
+            <div id="narration-text">
+                Hệ thống địa đạo Củ Chi là một kỳ tích quân sự, kéo dài hơn 250km dưới lòng đất với 3 tầng sâu khác nhau.
+            </div>
+            
+            <div id="audio-controls">
+                <button id="btn-toggle-voice" class="audio-btn" title="Bật/Tắt giọng đọc">🔊 Voice: ON</button>
+                <div class="volume-slider">
+                    <label for="sfx-volume">SFX</label>
+                    <input type="range" id="sfx-volume" min="0" max="1" step="0.1" value="0.8">
+                </div>
+            </div>
+        </aside>
+
+        <!-- Camera Controls -->
+        <div id="camera-controls">
+            <div class="d-pad">
+                <button class="cam-btn" id="cam-up">▲</button>
+                <div class="d-pad-middle">
+                    <button class="cam-btn" id="cam-left">◀</button>
+                    <button class="cam-btn" id="cam-right">▶</button>
+                </div>
+                <button class="cam-btn" id="cam-down">▼</button>
+            </div>
+            <div class="zoom-controls">
+                <button class="cam-btn" id="cam-zoom-in">+</button>
+                <button class="cam-btn" id="cam-zoom-out">-</button>
+            </div>
+        </div>
+
+        <!-- Tooltip -->
+        <div id="tooltip" class="hidden"></div>
+    </div>
+
+    <!-- 3D Canvas Layer -->
+    <div id="canvas-container">
+        <canvas id="simulation-canvas"></canvas>
+    </div>
+
+    <!-- Data & Config -->
+    <script src="js/config/constants.js"></script>
+    <script src="js/data/locations.js"></script>
+    <script src="js/data/routes.js"></script>
+    <script src="js/data/narrations.js"></script>
+    
+    <!-- Engine -->
+    <script src="js/engine/canvas.js"></script>
+    <script src="js/engine/projection.js"></script>
+    <script src="js/engine/terrain.js"></script>
+    
+    <!-- Audio & Visuals (To be implemented later) -->
+    <!--
+    <script src="js/audio/audioEngine.js"></script>
+    <script src="js/audio/narrator.js"></script>
+    <script src="js/visual/particles.js"></script>
+    <script src="js/visual/renderer.js"></script>
+    -->
+
+    <!-- Logic & Input -->
+    <!--
+    <script src="js/controls/input.js"></script>
+    <script src="js/controls/ui.js"></script>
+    -->
+    <script src="js/app.js"></script>
+</body>
+</html>
