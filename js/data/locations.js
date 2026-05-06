@@ -20,10 +20,10 @@ const LOCATIONS = [
         x:-220, y:CONFIG.DEPTHS.SURFACE, z:120, icon:"🌿",
         dimensions:"Ø10-15cm", depth_label:"Mặt đất", capacity:"Không người",
         period:"1961-1975", significance:"Cung cấp oxy cho toàn hệ thống",
-        description:"Ngụy trang thành gò mối hoặc cụm cây bụi. Đường kính chỉ 10-15cm nhưng đóng vai trò sống còn cung cấp oxy.",
+        description:"Ngụy trang thành gò mối hoặc cụm cây bụi. Đường kính chỉ 10-15cm nhưng đóng vai trò sống còn. Nếu lỗ bị nghẹt hoặc lính Mỹ phát hiện bơm khí độc xuống, hàng chục người bên dưới có thể chết ngạt trong bóng tối.",
         activities:[
-            {icon:"💨",text:"Dẫn không khí tươi xuống hầm",time:"Liên tục"},
-            {icon:"💨",text:"Thoát khói bếp Hoàng Cầm",time:"Khi nấu ăn"}
+            {icon:"💨",text:"Dẫn không khí tươi xuống hầm ngột ngạt",time:"Liên tục"},
+            {icon:"💨",text:"Thoát khói bếp Hoàng Cầm một cách chậm rãi",time:"Khi nấu ăn"}
         ],
         flows:[{toId:"bep_hoang_cam",label:"Thoát khói từ bếp",type:"smoke"}],
         fact:"Hệ thống thông hơi được thiết kế để khói bếp nguội dần qua đường ống dài trước khi ra ngoài, không tạo khói trắng dễ bị phát hiện.",
@@ -156,12 +156,12 @@ const LOCATIONS = [
         x:260, y:CONFIG.DEPTHS.LEVEL_2, z:80, icon:"🏥",
         dimensions:"5m × 3m × 1.6m", depth_label:"6m sâu", capacity:"6-8 bệnh nhân",
         period:"1961-1975", significance:"Cứu sống hàng nghìn chiến sĩ",
-        description:"Phẫu thuật dưới ánh đèn dầu. Bàn mổ làm từ cánh cửa gỗ. Phẫu thuật không gây mê vì thiếu thuốc.",
+        description:"Phẫu thuật dưới ánh đèn dầu leo lét, thiếu thốn trăm bề. Bàn mổ làm từ cánh cửa gỗ. Phẫu thuật không có thuốc gây mê, cưa xương bằng cưa thợ mộc, thương binh phải cắn chặt khăn để chịu đựng đau đớn tột cùng.",
         activities:[
-            {icon:"🩺",text:"Phẫu thuật cấp cứu thương binh",time:"Khi có chiến sự"},
-            {icon:"💊",text:"Cấp phát thuốc và băng bó",time:"Sáng + Chiều"},
-            {icon:"🛏",text:"Chăm sóc bệnh nhân nằm viện",time:"24/24"},
-            {icon:"📋",text:"Ghi chép hồ sơ bệnh án",time:"Hàng ngày"}
+            {icon:"🩺",text:"Phẫu thuật sống không thuốc mê",time:"Khi có chiến sự"},
+            {icon:"💊",text:"Chữa trị sốt rét ác tính",time:"Sáng + Chiều"},
+            {icon:"🛏",text:"Nằm điều trị trong hơi ẩm ướt",time:"24/24"},
+            {icon:"📋",text:"Ghi chép hồ sơ dưới ánh đèn dầu",time:"Hàng ngày"}
         ],
         flows:[
             {toId:"ham_chi_huy",label:"Báo cáo tình hình thương binh",type:"report"},
@@ -210,11 +210,11 @@ const LOCATIONS = [
         x:-60, y:CONFIG.DEPTHS.LEVEL_3, z:0, icon:"💣",
         dimensions:"2.5m × 1.5m × 1.2m", depth_label:"10m sâu", capacity:"4-6 người",
         period:"1965-1973", significance:"Tuyến phòng thủ cuối cùng của sự sống",
-        description:"Tầng sâu nhất, 10m dưới đất. Vách đất sét dày 1.5m. Chịu rung chấn B-52 nổ cách 20m. Không gian cực kỳ chật hẹp.",
+        description:"Tầng sâu nhất (10m), vách đất sét đặc quánh. Chịu được bom B-52 nhưng không khí cực kỳ loãng, nóng hầm hập. Bóng tối đặc quánh ('Black Echo'), tiếng bom nổ dội xuống làm tức ngực, chảy máu tai.",
         activities:[
-            {icon:"🏃",text:"Sơ tán nhanh khi còi báo bom",time:"Khi có báo động"},
-            {icon:"😤",text:"Nằm chờ đợi bom ngừng",time:"Vài giờ đến vài ngày"},
-            {icon:"🩹",text:"Sơ cứu cho người bị thương nhẹ",time:"Sau bom"}
+            {icon:"🏃",text:"Chen chúc sơ tán, nghẹt thở",time:"Khi có báo động"},
+            {icon:"😤",text:"Chịu đựng đói khát, bóng tối nhiều ngày",time:"Vài giờ đến vài ngày"},
+            {icon:"🩹",text:"Nằm sát đất chịu chấn động B-52",time:"Trong trận bom"}
         ],
         flows:[{toId:"ham_chi_huy",label:"Leo lên hầm chỉ huy sau bom",type:"evacuation"}],
         fact:"Trong chiến dịch Linebacker II (1972), bom B-52 rải thảm đã san phẳng mặt đất Củ Chi — nhưng hầm này vẫn nguyên vẹn. Áp suất bên trong tăng mạnh khiến tai ù và chảy máu mũi.",
@@ -225,11 +225,11 @@ const LOCATIONS = [
         x:160, y:CONFIG.DEPTHS.LEVEL_3, z:80, icon:"🌾",
         dimensions:"5m × 3m × 1.5m", depth_label:"10m sâu", capacity:"3-4 người",
         period:"1961-1975", significance:"Đảm bảo hậu cần 200 người trong 3 tháng",
-        description:"Gạo, muối, khoai mì sấy, lương khô. Đặt trong thùng thiếc hàn kín chống ẩm và kiến. Nhiệt độ ổn định 25-27°C.",
+        description:"Gạo, muối, khoai mì cất trong thùng thiếc chống ẩm và chống chuột bọ. Không gian thường xuyên có kiến ba khoang, rết và chuột đào hang tranh giành thức ăn ít ỏi.",
         activities:[
-            {icon:"📊",text:"Kiểm tra tồn kho hàng tuần",time:"Thứ 2 sáng"},
-            {icon:"🌾",text:"Phân phối khẩu phần theo ngày",time:"Sáng sớm"},
-            {icon:"🐜",text:"Kiểm tra và chống kiến, mốc",time:"Hàng ngày"}
+            {icon:"📊",text:"Đong đếm từng lon gạo (rất ít ỏi)",time:"Thứ 2 sáng"},
+            {icon:"🌾",text:"Ăn củ mài, rễ cây khi hết gạo",time:"Sáng sớm"},
+            {icon:"🐜",text:"Chiến đấu với chuột, mối mọt",time:"Hàng ngày"}
         ],
         flows:[
             {toId:"bep_hoang_cam",label:"Cấp gạo, muối cho bếp",type:"supply"},
