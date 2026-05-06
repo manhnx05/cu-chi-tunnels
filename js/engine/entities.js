@@ -70,7 +70,14 @@ class EntityManager {
 
             Canvas.ctx.beginPath();
             Canvas.ctx.arc(screenPos.x, screenPos.y, 6 * CONFIG.SCALE * CONFIG.CAMERA.zoom, 0, Math.PI * 2);
-            Canvas.ctx.fillStyle = ent.type === 'enemy' ? CONFIG.COLORS.ENEMY_DOT : CONFIG.COLORS.VC_DOT;
+            
+            if (ent.type === 'enemy') {
+                Canvas.ctx.fillStyle = CONFIG.COLORS.ENEMY_DOT;
+            } else if (ent.type === 'tourist') {
+                Canvas.ctx.fillStyle = CONFIG.COLORS.TOURIST_DOT;
+            } else {
+                Canvas.ctx.fillStyle = CONFIG.COLORS.VC_DOT;
+            }
             
             // Add glowing effect
             Canvas.ctx.shadowBlur = 10;
