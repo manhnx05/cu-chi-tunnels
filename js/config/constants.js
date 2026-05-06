@@ -35,6 +35,7 @@ const CONFIG = {
         // Entitites
         VC_DOT: "rgba(25, 118, 210, 0.8)", // Blue glowing dots for guerilla
         ENEMY_DOT: "rgba(211, 47, 47, 0.8)", // Red glowing dots for tunnel rats
+        TOURIST_DOT: "rgba(255, 255, 255, 0.8)", // White dots for tourists
         
         // Structures
         TUNNEL_WALL: "#1a100b",
