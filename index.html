@@ -6,6 +6,7 @@
     <title>Mô phỏng Địa đạo Củ Chi 3D</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/loading.css">
 </head>
 <body>
     <!-- UI Overlay Layer -->
@@ -67,6 +68,13 @@
         <canvas id="simulation-canvas"></canvas>
     </div>
 
+    <!-- Core Systems (Load First) -->
+    <script src="js/core/loader.js"></script>
+    <script src="js/core/state.js"></script>
+    <script src="js/core/performance.js"></script>
+    <script src="js/core/pool.js"></script>
+    <script src="js/core/keyboard.js"></script>
+    
     <!-- Data & Config -->
     <script src="js/config/constants.js"></script>
     <script src="js/data/locations.js"></script>
