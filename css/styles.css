@@ -1,0 +1,279 @@
+:root {
+    --bg-color: #121212;
+    --surface-color: #2e3b32; /* Dull green for surface */
+    --earth-1: #4a3728; /* Tầng 1: 3m */
+    --earth-2: #3e2723; /* Tầng 2: 6m */
+    --earth-3: #2d1b18; /* Tầng 3: 10m */
+    
+    --text-main: #e0e0e0;
+    --text-muted: #a0a0a0;
+    --accent-red: #d32f2f;
+    --accent-blue: #1976d2;
+    --accent-gold: #fbc02d;
+    
+    --panel-bg: rgba(18, 18, 18, 0.85);
+    --panel-border: rgba(255, 255, 255, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    overflow: hidden; /* Prevent scrolling, canvas fills screen */
+}
+
+/* Canvas */
+#canvas-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;
+}
+
+#simulation-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* UI Overlay */
+#ui-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none; /* Let clicks pass through to canvas */
+}
+
+/* Make interactive UI elements clickable */
+header, nav, aside, #camera-controls, #tooltip {
+    pointer-events: auto;
+}
+
+/* Header */
+header {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    padding: 15px 25px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+header p {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-family: 'Roboto Mono', monospace;
+}
+
+/* Phase Panel */
+#phase-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    background: var(--panel-bg);
+    padding: 10px;
+    border-radius: 30px;
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(10px);
+}
+
+.phase-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.phase-btn:hover {
+    color: var(--text-main);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.phase-btn.active {
+    background: rgba(251, 192, 45, 0.15);
+    color: var(--accent-gold);
+    border: 1px solid rgba(251, 192, 45, 0.3);
+}
+
+/* Information Panel */
+#info-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 320px;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+#info-title {
+    font-size: 18px;
+    color: var(--accent-gold);
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--panel-border);
+    padding-bottom: 10px;
+}
+
+#narration-text {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    min-height: 100px;
+}
+
+/* Highlights for narration keywords */
+.highlight-keyword {
+    color: var(--accent-gold);
+    font-weight: bold;
+}
+
+/* Audio Controls */
+#audio-controls {
+    border-top: 1px solid var(--panel-border);
+    padding-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.audio-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--text-main);
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+    text-align: left;
+}
+
+.audio-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.audio-btn.off {
+    color: #e57373;
+}
+
+.volume-slider {
+    display: flex;
+    align-align: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.volume-slider input[type="range"] {
+    flex-grow: 1;
+    cursor: pointer;
+}
+
+/* Camera Controls */
+#camera-controls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.d-pad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.d-pad-middle {
+    display: flex;
+    gap: 30px;
+}
+
+.cam-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    color: var(--text-main);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.cam-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.cam-btn:active {
+    transform: scale(0.95);
+}
+
+.zoom-controls {
+    display: flex;
+    gap: 10px;
+}
+
+/* Tooltip */
+#tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    border: 1px solid var(--accent-gold);
+    padding: 10px 15px;
+    border-radius: 5px;
+    pointer-events: none;
+    font-size: 14px;
+    z-index: 100;
+    transition: opacity 0.2s;
+}
+
+#tooltip.hidden {
+    opacity: 0;
+}
+
+#tooltip h3 {
+    color: var(--accent-gold);
+    margin-bottom: 5px;
+    font-size: 16px;
+}
