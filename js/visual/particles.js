@@ -56,26 +56,47 @@ class ParticleSystem {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             let p = this.particles[i];
             
-            p.x += p.vx;
-            p.y += p.vy;
-            p.z += p.vz;
+            // Apply physics
+            if (p.type === 'dirt' || p.type === 'blood') {
+                p.vy += 0.15 * (dt / 16); // Gravity
+                p.vx *= 0.98; // Air resistance
+                p.vz *= 0.98;
+            } else if (p.type === 'smoke') {
+                p.vx *= 0.95; // Friction
+                p.vz *= 0.95;
+            }
+
+            p.x += p.vx * (dt / 16);
+            p.y += p.vy * (dt / 16);
+            p.z += p.vz * (dt / 16);
             p.life -= p.decay * (dt / 16); // normalize dt
             
+            // Default targetY if undefined
+            if (p.targetY === undefined) p.targetY = p.y + 20;
+
             if (p.type === 'smoke') {
-                p.size += 0.1;
+                p.size += 0.1 * (dt / 16);
                 // Hit the surface -> spread horizontally
                 if (p.y <= p.targetY) {
                     p.y = p.targetY;
-                    p.vy = 0;
-                    p.vx *= 1.02;
-                    p.vz *= 1.02;
+                    if (p.vy < 0) p.vy *= -0.5; // bounce off ceiling
+                    p.vx += (Math.random() - 0.5) * 0.5; // Wind
+                    p.vz += (Math.random() - 0.5) * 0.5;
                 }
-            } else if (p.type === 'dirt') {
-                // Hit the floor -> stop and stay
+            } else if (p.type === 'dirt' || p.type === 'blood') {
+                // Hit the floor -> bounce and stop
                 if (p.y >= p.targetY) {
                     p.y = p.targetY;
-                    p.vy = 0;
-                    p.decay = 0.002; // linger on the floor
+                    if (p.vy > 0.5) {
+                        p.vy *= -0.3; // Bounce damping
+                        p.vx *= 0.6; // Ground friction
+                        p.vz *= 0.6;
+                    } else {
+                        p.vy = 0;
+                        p.vx = 0;
+                        p.vz = 0;
+                        p.decay = 0.002; // linger on the floor
+                    }
                 }
             }
 

@@ -11,13 +11,23 @@ const CONFIG = {
     CAMERA: {
         x: 0,
         y: 0, // Y offset
-        zoom: 1.0,
+        zoom: 0.8, // Bắt đầu ở Toàn cảnh
         targetX: 0,
         targetY: 0,
-        targetZoom: 1.0,
+        targetZoom: 0.8,
         moveSpeed: 50,
         zoomSpeed: 0.2
     },
+    
+    // Default camera positions for cinematic phase transitions
+    CAMERA_VIEWS: [
+        { x: 0, y: 0, zoom: 0.8 },       // Phase 0: Toàn cảnh
+        { x: -100, y: 100, zoom: 1.2 },  // Phase 1: Sinh hoạt (gần bề mặt)
+        { x: 50, y: 250, zoom: 1.5 },    // Phase 2: Chống càn (Hầm chông)
+        { x: 0, y: 50, zoom: 1.1 },      // Phase 3: Xuất kích (Mặt đất)
+        { x: -150, y: 350, zoom: 1.2 },  // Phase 4: Di tích
+        { x: 150, y: 800, zoom: 1.5 }    // Phase 5: Đào hầm (Sâu nhất)
+    ],
 
     // World depths (in game units, 1 unit roughly = 1cm, so 3m = 300 units)
     DEPTHS: {

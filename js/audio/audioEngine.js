@@ -138,7 +138,9 @@ class AudioEngine {
         
         const muffle = this.ctx.createBiquadFilter();
         muffle.type = 'lowpass';
-        muffle.frequency.value = depth > 100 ? 800 : 20000; // Muffle if underground
+        let freq = depth > 100 ? 800 : 20000;
+        freq = freq / Math.max(0.5, (CONFIG.CAMERA.zoom || 1.0));
+        muffle.frequency.value = Math.max(300, Math.min(20000, freq));
         
         noise.connect(filter);
         filter.connect(gain);
@@ -180,7 +182,9 @@ class AudioEngine {
             
             const muffle = this.ctx.createBiquadFilter();
             muffle.type = 'lowpass';
-            muffle.frequency.value = depth > 100 ? 600 : 20000;
+            let freq = depth > 100 ? 600 : 20000;
+            freq = freq / Math.max(0.5, (CONFIG.CAMERA.zoom || 1.0));
+            muffle.frequency.value = Math.max(300, Math.min(20000, freq));
             
             noise.connect(filter);
             filter.connect(gain);
@@ -240,7 +244,9 @@ class AudioEngine {
         
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.value = 600; // Dull thud
+        let freq = 600; // Dull thud
+        freq = freq / Math.max(0.5, (CONFIG.CAMERA.zoom || 1.0));
+        filter.frequency.value = Math.max(200, Math.min(20000, freq));
         
         const gain = this.ctx.createGain();
         gain.gain.setValueAtTime(0.8, this.ctx.currentTime);

@@ -30,6 +30,9 @@ class RendererEngine {
         // 4. Render Lighting (Fog of War / Darkness overlay)
         this.renderLighting();
 
+        // 5. Render Vignette (Cinematic border shadow)
+        this.renderVignette();
+
         if (Particles.shakeTime > 0) {
             Canvas.ctx.restore();
         }
@@ -76,11 +79,15 @@ class RendererEngine {
         for (const node of LOCATIONS) {
             if (node.type === 'infrastructure') {
                 const screenPos = Projection.project(node.x, node.y, node.z);
-                const radius = 120 * CONFIG.CAMERA.zoom;
+                
+                // Flicker Effect using Math.sin and time
+                const time = Date.now() / 150;
+                const flicker = Math.sin(time + node.x) * 0.05 + Math.sin(time * 0.7 + node.y) * 0.05;
+                const radius = (120 + flicker * 20) * CONFIG.CAMERA.zoom;
                 
                 const grad = Canvas.ctx.createRadialGradient(screenPos.x, screenPos.y, 0, screenPos.x, screenPos.y, radius);
-                grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-                grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                grad.addColorStop(0, `rgba(255, 220, 150, ${1 + flicker})`); // Warm torch color
+                grad.addColorStop(1, 'rgba(255, 220, 150, 0)');
                 
                 Canvas.ctx.beginPath();
                 Canvas.ctx.arc(screenPos.x, screenPos.y, radius, 0, Math.PI * 2);
@@ -112,6 +119,21 @@ class RendererEngine {
             }
         }
         
+        Canvas.ctx.restore();
+    }
+
+    renderVignette() {
+        const cx = CONFIG.CANVAS_WIDTH / 2;
+        const cy = CONFIG.CANVAS_HEIGHT / 2;
+        const radius = Math.max(cx, cy) * 1.5;
+        
+        const grad = Canvas.ctx.createRadialGradient(cx, cy, radius * 0.4, cx, cy, radius);
+        grad.addColorStop(0, 'rgba(0,0,0,0)');
+        grad.addColorStop(1, 'rgba(0,0,0,0.7)');
+        
+        Canvas.ctx.save();
+        Canvas.ctx.fillStyle = grad;
+        Canvas.ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
         Canvas.ctx.restore();
     }
 }

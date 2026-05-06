@@ -15,7 +15,8 @@ class EntityManager {
             end: endNode,
             progress: 0,
             speed: 1 / durationMs, // Progress per millisecond
-            active: true
+            active: true,
+            trail: [] // Store trail positions
         });
     }
 
@@ -25,6 +26,12 @@ class EntityManager {
             if (!ent.active) continue;
 
             ent.progress += ent.speed * dt;
+            
+            // Record trail
+            if (Math.random() > 0.5) { // Skip some frames for performance
+                ent.trail.push(ent.progress);
+                if (ent.trail.length > 8) ent.trail.shift();
+            }
             
             if (ent.progress >= 1.0) {
                 // Reached destination
@@ -61,23 +68,57 @@ class EntityManager {
         for (const ent of this.entities) {
             if (!ent.active) continue;
 
-            // Easing function (easeInOutQuad) for realistic movement
+            // Easing function (easeInOutCubic) for more cinematic movement
             let p = ent.progress;
-            if (ent.type !== 'tourist') { // Tourists walk linearly, others sneak
-                p = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+            if (ent.type !== 'tourist') {
+                p = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
             }
 
-            // Interpolate 3D position
-            const x = ent.start.x + (ent.end.x - ent.start.x) * p;
-            const y = ent.start.y + (ent.end.y - ent.start.y) * p;
-            const z = ent.start.z + (ent.end.z - ent.start.z) * p;
+            // Set color based on type
+            let color = CONFIG.COLORS.VC_DOT;
+            if (ent.type === 'enemy') color = CONFIG.COLORS.ENEMY_DOT;
+            else if (ent.type === 'tourist') color = CONFIG.COLORS.TOURIST_DOT;
+            else if (ent.type === 'digger') color = CONFIG.COLORS.DIGGER_DOT;
 
-            const screenPos = Projection.project(x, y, z);
+            // Render Trail
+            if (ent.trail && ent.trail.length > 0) {
+                Canvas.ctx.beginPath();
+                for (let j = 0; j < ent.trail.length; j++) {
+                    let tp = ent.trail[j];
+                    if (ent.type !== 'tourist') {
+                        tp = tp < 0.5 ? 4 * tp * tp * tp : 1 - Math.pow(-2 * tp + 2, 3) / 2;
+                    }
+                    const tX = ent.start.x + (ent.end.x - ent.start.x) * tp;
+                    const tY = ent.start.y + (ent.end.y - ent.start.y) * tp;
+                    const tZ = ent.start.z + (ent.end.z - ent.start.z) * tp;
+                    const ts = Projection.project(tX, tY, tZ);
+                    
+                    if (j === 0) Canvas.ctx.moveTo(ts.x, ts.y);
+                    else Canvas.ctx.lineTo(ts.x, ts.y);
+                }
+                // Connect to current pos
+                const x = ent.start.x + (ent.end.x - ent.start.x) * p;
+                const y = ent.start.y + (ent.end.y - ent.start.y) * p;
+                const z = ent.start.z + (ent.end.z - ent.start.z) * p;
+                const screenPos = Projection.project(x, y, z);
+                Canvas.ctx.lineTo(screenPos.x, screenPos.y);
+                
+                Canvas.ctx.strokeStyle = color.replace('0.8', '0.3'); // Make trail transparent
+                Canvas.ctx.lineWidth = 4 * CONFIG.SCALE * CONFIG.CAMERA.zoom;
+                Canvas.ctx.lineCap = 'round';
+                Canvas.ctx.stroke();
+            } else {
+                // If no trail yet, just calculate current pos
+                var x = ent.start.x + (ent.end.x - ent.start.x) * p;
+                var y = ent.start.y + (ent.end.y - ent.start.y) * p;
+                var z = ent.start.z + (ent.end.z - ent.start.z) * p;
+                var screenPos = Projection.project(x, y, z);
+            }
             
             // Calculate direction angle on screen
-            const nextX = ent.start.x + (ent.end.x - ent.start.x) * (p + 0.01);
-            const nextY = ent.start.y + (ent.end.y - ent.start.y) * (p + 0.01);
-            const nextZ = ent.start.z + (ent.end.z - ent.start.z) * (p + 0.01);
+            const nextX = ent.start.x + (ent.end.x - ent.start.x) * Math.min(p + 0.01, 1.0);
+            const nextY = ent.start.y + (ent.end.y - ent.start.y) * Math.min(p + 0.01, 1.0);
+            const nextZ = ent.start.z + (ent.end.z - ent.start.z) * Math.min(p + 0.01, 1.0);
             const nextScreen = Projection.project(nextX, nextY, nextZ);
             
             const dx = nextScreen.x - screenPos.x;
@@ -88,23 +129,14 @@ class EntityManager {
             if (ent.type === 'tourist') {
                 Canvas.ctx.arc(screenPos.x, screenPos.y, 6 * CONFIG.SCALE * CONFIG.CAMERA.zoom, 0, Math.PI * 2);
             } else {
-                // Draw as an oriented ellipse for military entities
                 Canvas.ctx.ellipse(screenPos.x, screenPos.y, 8 * CONFIG.SCALE * CONFIG.CAMERA.zoom, 4 * CONFIG.SCALE * CONFIG.CAMERA.zoom, angle, 0, Math.PI * 2);
             }
             
-            if (ent.type === 'enemy') {
-                Canvas.ctx.fillStyle = CONFIG.COLORS.ENEMY_DOT;
-            } else if (ent.type === 'tourist') {
-                Canvas.ctx.fillStyle = CONFIG.COLORS.TOURIST_DOT;
-            } else if (ent.type === 'digger') {
-                Canvas.ctx.fillStyle = CONFIG.COLORS.DIGGER_DOT;
-            } else {
-                Canvas.ctx.fillStyle = CONFIG.COLORS.VC_DOT;
-            }
+            Canvas.ctx.fillStyle = color;
             
             // Add glowing effect
-            Canvas.ctx.shadowBlur = 10;
-            Canvas.ctx.shadowColor = Canvas.ctx.fillStyle;
+            Canvas.ctx.shadowBlur = 15;
+            Canvas.ctx.shadowColor = color;
             Canvas.ctx.fill();
             Canvas.ctx.shadowBlur = 0; // Reset
         }

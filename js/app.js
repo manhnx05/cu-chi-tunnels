@@ -43,6 +43,17 @@ class App {
         console.log(`Switched to Phase ${phase}`);
         this.updateNarration(phase);
         
+        // --- Cinematic Camera Sweep ---
+        if (typeof CONFIG !== 'undefined' && CONFIG.CAMERA_VIEWS && CONFIG.CAMERA_VIEWS[phase]) {
+            const view = CONFIG.CAMERA_VIEWS[phase];
+            CONFIG.CAMERA.targetX = view.x;
+            CONFIG.CAMERA.targetY = view.y;
+            CONFIG.CAMERA.targetZoom = view.zoom;
+            // Activate sweeping state for slower easing
+            this.isSweeping = true;
+            setTimeout(() => this.isSweeping = false, 3000); // 3 seconds sweep
+        }
+        
         // Speak narration if not muted
         if (Narrator.synth) {
             Narrator.speak(NARRATIONS[phase].text);
@@ -52,7 +63,8 @@ class App {
         if (phase === 2) {
             AudioSys.playBombRumble();
             Particles.triggerShake(3000, 15);
-            this.focusOnNode('ham_chong'); // Auto-focus on trap
+            // Overwrite camera to focus on trap specifically
+            this.focusOnNode('ham_chong'); 
             
             // Spawn Tunnel Rats down to the trap
             if (typeof Entities !== 'undefined') {
@@ -150,8 +162,13 @@ class App {
     }
 
     update(dt) {
-        // Camera Lerp
-        const lerpSpeed = 1.0 - Math.pow(0.001, dt / 1000); // Time-independent lerp
+        // Camera Lerp (Cinematic Sweep vs Normal Pan)
+        const baseLerp = this.isSweeping ? 0.05 : 0.001; // Slower when sweeping, faster for normal controls
+        const lerpSpeed = 1.0 - Math.pow(baseLerp, dt / 1000); 
+        
+        // Apply cubic easing-out for smoother landing
+        const easeOutQuad = (t) => t * (2 - t);
+        
         CONFIG.CAMERA.x += (CONFIG.CAMERA.targetX - CONFIG.CAMERA.x) * lerpSpeed;
         CONFIG.CAMERA.y += (CONFIG.CAMERA.targetY - CONFIG.CAMERA.y) * lerpSpeed;
         CONFIG.CAMERA.zoom += (CONFIG.CAMERA.targetZoom - CONFIG.CAMERA.zoom) * lerpSpeed;
