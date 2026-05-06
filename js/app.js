@@ -62,10 +62,17 @@ class App {
             }
         } else if (phase === 3) {
             AudioSys.playHelicopter();
+            AudioSys.playGunfire();
             
-            // Surface attack
+            // Surface attack - Multiple VC units emerging
             if (typeof Entities !== 'undefined') {
                 Entities.spawn('vc', 'ngach_song', 'lo_thong_hoi', 4000); 
+                setTimeout(() => Entities.spawn('vc', 'ham_chi_huy', 'lo_thong_hoi', 3000), 500);
+                setTimeout(() => Entities.spawn('vc', 'bep_hoang_cam', 'lo_thong_hoi', 2000), 1000);
+                
+                // Continuous gunfire
+                setTimeout(() => AudioSys.playGunfire(), 1500);
+                setTimeout(() => AudioSys.playGunfire(), 3200);
             }
         }
     }
