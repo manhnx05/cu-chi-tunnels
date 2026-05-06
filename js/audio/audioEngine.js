@@ -139,6 +139,41 @@ class AudioEngine {
         
         noise.start();
     }
+
+    // Synthesize AK-47 gunfire (burst)
+    playGunfire() {
+        if (!this.ctx || this.isMuted) return;
+        
+        let time = this.ctx.currentTime;
+        // 3 shot burst
+        for (let i = 0; i < 3; i++) {
+            const bufferSize = this.ctx.sampleRate * 0.1; // 0.1 seconds
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            for (let j = 0; j < bufferSize; j++) {
+                data[j] = (Math.random() * 2 - 1) * Math.pow((1 - j/bufferSize), 2); // Exponential decay noise
+            }
+            
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 800; // Muffled gun pop
+            
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(1.0, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+            
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.masterGain);
+            
+            noise.start(time);
+            time += 0.12; // Time between shots
+        }
+    }
 }
 
 const AudioSys = new AudioEngine();
