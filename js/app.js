@@ -90,6 +90,24 @@ class App {
                     }
                 }, 4000);
             }
+        } else if (phase === 5) {
+            // Digging tunnels
+            AudioSys.playDiggingSound();
+            
+            if (typeof Entities !== 'undefined') {
+                Entities.spawn('digger', 'lo_thong_hoi', 'bep_hoang_cam', 3000); 
+                
+                setInterval(() => {
+                    if (this.currentPhase === 5) {
+                        AudioSys.playDiggingSound();
+                        if (Math.random() > 0.5) {
+                            Entities.spawn('digger', 'lo_thong_hoi', 'bep_hoang_cam', 3000); 
+                        } else {
+                            Entities.spawn('digger', 'bep_hoang_cam', 'lo_thong_hoi', 3000); 
+                        }
+                    }
+                }, 2000);
+            }
         }
     }
 
