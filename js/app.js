@@ -74,6 +74,22 @@ class App {
                 setTimeout(() => AudioSys.playGunfire(), 1500);
                 setTimeout(() => AudioSys.playGunfire(), 3200);
             }
+        } else if (phase === 4) {
+            // Peace / Tourism
+            AudioSys.playNatureAmbient();
+            
+            // Tourists walking around safely
+            if (typeof Entities !== 'undefined') {
+                Entities.spawn('tourist', 'lo_thong_hoi', 'ham_chi_huy', 5000); 
+                setTimeout(() => Entities.spawn('tourist', 'ham_chi_huy', 'bep_hoang_cam', 4000), 2000);
+                
+                // Continuous bird chirping
+                setInterval(() => {
+                    if (this.currentPhase === 4 && Math.random() > 0.5) {
+                        AudioSys.playNatureAmbient();
+                    }
+                }, 4000);
+            }
         }
     }
 
