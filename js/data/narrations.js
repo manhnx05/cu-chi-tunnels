@@ -24,5 +24,10 @@ const NARRATIONS = {
         title: "Di tích lịch sử (Ngày nay)",
         text: "Chiến tranh lùi xa, Địa đạo Củ Chi nay trở thành Di tích Lịch sử Quốc gia. Một số đoạn hầm được nới rộng và thắp sáng đèn để đón hàng triệu lượt du khách trong và ngoài nước đến tham quan, trải nghiệm.",
         keywords: ["Di tích Lịch sử", "nới rộng", "thắp sáng đèn", "du khách"]
+    },
+    5: {
+        title: "Kiến thiết & Đào hầm",
+        text: "Hệ thống địa đạo đồ sộ này được đào đắp hoàn toàn bằng sức người với cuốc chim và ky tre. Đất đào lên được bí mật tản ra mương, đổ xuống sông hoặc đắp thành các ụ chiến đấu ngụy trang để tránh sự phát hiện của kẻ thù.",
+        keywords: ["sức người", "cuốc chim", "bí mật tản ra", "ụ chiến đấu"]
     }
 };
