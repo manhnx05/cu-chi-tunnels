@@ -20,7 +20,21 @@ class RendererEngine {
         Terrain.render();
 
         // 2. Render Entities
-        if (typeof Entities !== 'undefined') {
+        if (typeof EntityPoolInstance !== 'undefined') {
+            EntityPoolInstance.render(
+                Projection.project.bind(Projection),
+                Canvas.ctx,
+                CONFIG.COLORS,
+                CONFIG.SCALE,
+                CONFIG.CAMERA.zoom
+            );
+            
+            // Update stats
+            if (typeof PerfMonitor !== 'undefined') {
+                const stats = EntityPoolInstance.getStats();
+                PerfMonitor.stats.entitiesRendered = stats.active;
+            }
+        } else if (typeof Entities !== 'undefined') {
             Entities.render();
         }
 
@@ -39,23 +53,48 @@ class RendererEngine {
     }
 
     renderParticles() {
-        for (let p of Particles.particles) {
-            const screenPos = Projection.project(p.x, p.y, p.z);
+        // Use pooled particles if available
+        if (typeof ParticlePoolInstance !== 'undefined') {
+            ParticlePoolInstance.render(
+                Projection.project.bind(Projection),
+                Canvas.ctx,
+                CONFIG.SCALE,
+                CONFIG.CAMERA.zoom
+            );
             
-            Canvas.ctx.beginPath();
-            
-            if (p.type === 'smoke') {
-                Canvas.ctx.arc(screenPos.x, screenPos.y, p.size * CONFIG.SCALE * CONFIG.CAMERA.zoom, 0, Math.PI * 2);
-                Canvas.ctx.fillStyle = `rgba(200, 200, 200, ${p.life * 0.5})`;
-            } else if (p.type === 'dirt') {
-                Canvas.ctx.arc(screenPos.x, screenPos.y, p.size * CONFIG.SCALE * CONFIG.CAMERA.zoom, 0, Math.PI * 2);
-                Canvas.ctx.fillStyle = `rgba(74, 55, 40, ${p.life})`; // Earth color
-            } else if (p.type === 'blood') {
-                Canvas.ctx.arc(screenPos.x, screenPos.y, p.size * CONFIG.SCALE * CONFIG.CAMERA.zoom, 0, Math.PI * 2);
-                Canvas.ctx.fillStyle = `rgba(183, 28, 28, ${p.life})`; // Blood color
+            // Update stats
+            if (typeof PerfMonitor !== 'undefined') {
+                const stats = ParticlePoolInstance.getStats();
+                PerfMonitor.stats.particlesRendered = stats.active;
             }
-            
-            Canvas.ctx.fill();
+        } else {
+            // Fallback to old system
+            for (let p of Particles.particles) {
+                const screenPos = Projection.project(p.x, p.y, p.z);
+                
+                // Culling check
+                if (typeof Culling !== 'undefined' && !Culling.isVisible(screenPos.x, screenPos.y, p.size * 2)) {
+                    if (typeof PerfMonitor !== 'undefined') PerfMonitor.recordCulled();
+                    continue;
+                }
+                
+                Canvas.ctx.beginPath();
+                
+                if (p.type === 'smoke') {
+                    Canvas.ctx.arc(screenPos.x, screenPos.y, p.size * CONFIG.SCALE * CONFIG.CAMERA.zoom, 0, Math.PI * 2);
+                    Canvas.ctx.fillStyle = `rgba(200, 200, 200, ${p.life * 0.5})`;
+                } else if (p.type === 'dirt') {
+                    Canvas.ctx.arc(screenPos.x, screenPos.y, p.size * CONFIG.SCALE * CONFIG.CAMERA.zoom, 0, Math.PI * 2);
+                    Canvas.ctx.fillStyle = `rgba(74, 55, 40, ${p.life})`; // Earth color
+                } else if (p.type === 'blood') {
+                    Canvas.ctx.arc(screenPos.x, screenPos.y, p.size * CONFIG.SCALE * CONFIG.CAMERA.zoom, 0, Math.PI * 2);
+                    Canvas.ctx.fillStyle = `rgba(183, 28, 28, ${p.life})`; // Blood color
+                }
+                
+                Canvas.ctx.fill();
+                
+                if (typeof PerfMonitor !== 'undefined') PerfMonitor.recordParticle();
+            }
         }
     }
 
