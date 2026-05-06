@@ -12,8 +12,11 @@ const CONFIG = {
         x: 0,
         y: 0, // Y offset
         zoom: 1.0,
-        moveSpeed: 20,
-        zoomSpeed: 0.1
+        targetX: 0,
+        targetY: 0,
+        targetZoom: 1.0,
+        moveSpeed: 50,
+        zoomSpeed: 0.2
     },
 
     // World depths (in game units, 1 unit roughly = 1cm, so 3m = 300 units)
