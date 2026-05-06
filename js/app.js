@@ -52,8 +52,21 @@ class App {
         if (phase === 2) {
             AudioSys.playBombRumble();
             Particles.triggerShake(3000, 15);
+            
+            // Spawn Tunnel Rats down to the trap
+            if (typeof Entities !== 'undefined') {
+                Entities.spawn('enemy', 'lo_thong_hoi', 'ham_chong', 3000); // 3 seconds to reach
+                
+                // Spawn guerillas ready at command
+                Entities.spawn('vc', 'ham_chi_huy', 'ham_chong', 2000); 
+            }
         } else if (phase === 3) {
             AudioSys.playHelicopter();
+            
+            // Surface attack
+            if (typeof Entities !== 'undefined') {
+                Entities.spawn('vc', 'ngach_song', 'lo_thong_hoi', 4000); 
+            }
         }
     }
 
@@ -106,6 +119,10 @@ class App {
         }
 
         Particles.update(dt);
+        
+        if (typeof Entities !== 'undefined') {
+            Entities.update(dt);
+        }
     }
 
     render(dt) {
