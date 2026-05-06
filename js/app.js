@@ -55,6 +55,25 @@ class App {
         
         // Init naration text
         this.updateNarration(0);
+        
+        // Realistic Mode Button
+        const btnRealistic = document.getElementById('btn-realistic-mode');
+        if (btnRealistic) {
+            btnRealistic.addEventListener('click', () => {
+                const isRealistic = (typeof State !== 'undefined') ? State.get('realisticMode') : false;
+                const newRealistic = !isRealistic;
+                if (typeof State !== 'undefined') State.set('realisticMode', newRealistic);
+                
+                btnRealistic.style.background = newRealistic ? '#ff3b30' : 'transparent';
+                btnRealistic.style.color = newRealistic ? '#fff' : '#ff3b30';
+                
+                if (newRealistic) {
+                    if (typeof AudioSys !== 'undefined') AudioSys.playHeartbeat();
+                } else {
+                    if (typeof AudioSys !== 'undefined') AudioSys.stopHeartbeat();
+                }
+            });
+        }
     }
 
     setPhase(phase) {
@@ -388,6 +407,25 @@ class App {
             Entities.update(scaledDt);
         }
         
+        // Update warfare systems (NEW - v3.0)
+        if (typeof TankSystemInstance !== 'undefined') {
+            TankSystemInstance.update(scaledDt);
+        }
+        
+        if (typeof AircraftSystemInstance !== 'undefined') {
+            AircraftSystemInstance.update(scaledDt);
+        }
+        
+        // Update room detail system
+        if (typeof RoomDetailInstance !== 'undefined') {
+            RoomDetailInstance.update(scaledDt);
+        }
+        
+        // Update timeline system
+        if (typeof TimelineInstance !== 'undefined') {
+            TimelineInstance.update(scaledDt);
+        }
+        
         // Update performance monitor
         if (typeof PerfMonitor !== 'undefined') {
             PerfMonitor.update(scaledDt);
@@ -401,6 +439,15 @@ class App {
         }
         
         Renderer.render(dt);
+        
+        // Render warfare systems on top (NEW - v3.0)
+        if (typeof TankSystemInstance !== 'undefined') {
+            TankSystemInstance.render();
+        }
+        
+        if (typeof AircraftSystemInstance !== 'undefined') {
+            AircraftSystemInstance.render();
+        }
     }
 
     loop(timestamp) {
