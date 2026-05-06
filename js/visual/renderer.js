@@ -122,10 +122,11 @@ class RendererEngine {
                 // Flicker Effect using Math.sin and time
                 const time = Date.now() / 150;
                 const flicker = Math.sin(time + node.x) * 0.05 + Math.sin(time * 0.7 + node.y) * 0.05;
-                const radius = (120 + flicker * 20) * CONFIG.CAMERA.zoom;
+                const radius = (160 + flicker * 25) * CONFIG.CAMERA.zoom; // Increased from 120 for better lighting
                 
                 const grad = Canvas.ctx.createRadialGradient(screenPos.x, screenPos.y, 0, screenPos.x, screenPos.y, radius);
-                grad.addColorStop(0, `rgba(255, 220, 150, ${1 + flicker})`); // Warm torch color
+                grad.addColorStop(0, `rgba(255, 220, 150, ${1.2 + flicker})`); // Brighter center
+                grad.addColorStop(0.5, `rgba(255, 200, 120, ${0.4 + flicker * 0.5})`); // Mid-tone
                 grad.addColorStop(1, 'rgba(255, 220, 150, 0)');
                 
                 Canvas.ctx.beginPath();

@@ -1,8 +1,8 @@
 class TerrainEngine {
     constructor() {
-        // Thickness ratios per tunnel type (in world-units)
-        this.TUNNEL_OUTER = 22; // outer wall diameter
-        this.TUNNEL_INNER = 14; // passable bore
+        // Thickness ratios per tunnel type (in world-units) - INCREASED for better visibility
+        this.TUNNEL_OUTER = 35; // Increased from 22 for thicker walls
+        this.TUNNEL_INNER = 22; // Increased from 14 for wider tunnels
 
         // Earth layer bands
         this.layers = [
@@ -231,12 +231,20 @@ class TerrainEngine {
             Canvas.ctx.strokeStyle = isShaft ? "#0d0806" : "#1a0e08";
             Canvas.ctx.stroke();
 
-            // Inner highlight top-edge (simulate curved ceiling)
+            // Inner highlight top-edge (simulate curved ceiling) - ENHANCED
             Canvas.ctx.beginPath();
             Canvas.ctx.moveTo(p1.x, p1.y);
             Canvas.ctx.lineTo(p2.x, p2.y);
+            Canvas.ctx.lineWidth = 3 * zoom;
+            Canvas.ctx.strokeStyle = "rgba(255,200,120,0.12)";
+            Canvas.ctx.stroke();
+            
+            // Bottom shadow for depth
+            Canvas.ctx.beginPath();
+            Canvas.ctx.moveTo(p1.x, p1.y + 1);
+            Canvas.ctx.lineTo(p2.x, p2.y + 1);
             Canvas.ctx.lineWidth = 2 * zoom;
-            Canvas.ctx.strokeStyle = "rgba(255,200,120,0.06)";
+            Canvas.ctx.strokeStyle = "rgba(0,0,0,0.3)";
             Canvas.ctx.stroke();
         }
     }
@@ -264,27 +272,40 @@ class TerrainEngine {
             }
 
             // Icon
-            if (zoom > 0.5) {
-                const fs = Math.max(10, 18 * zoom);
+            if (zoom > 0.4) {
+                const fs = Math.max(14, 24 * zoom); // Increased from 18 for better visibility
                 Canvas.ctx.font = `${fs}px serif`;
                 Canvas.ctx.textAlign = "center";
                 Canvas.ctx.textBaseline = "middle";
+                
+                // Icon shadow for depth
+                Canvas.ctx.shadowColor = "rgba(0,0,0,0.8)";
+                Canvas.ctx.shadowBlur = 6;
+                Canvas.ctx.shadowOffsetX = 2;
+                Canvas.ctx.shadowOffsetY = 2;
                 Canvas.ctx.fillText(node.icon || "●", center.x, center.y);
+                Canvas.ctx.shadowBlur = 0;
+                Canvas.ctx.shadowOffsetX = 0;
+                Canvas.ctx.shadowOffsetY = 0;
             }
 
             // Name label
-            if (zoom > 0.45) {
-                const labelSize = Math.max(9, 11 * zoom);
-                Canvas.ctx.font = `600 ${labelSize}px Inter, sans-serif`;
+            if (zoom > 0.4) {
+                const labelSize = Math.max(11, 14 * zoom); // Increased from 11 for better readability
+                Canvas.ctx.font = `700 ${labelSize}px Inter, sans-serif`; // Bolder font
                 Canvas.ctx.textAlign = "center";
                 Canvas.ctx.textBaseline = "top";
 
-                // Shadow for readability
-                Canvas.ctx.shadowColor = "rgba(0,0,0,0.9)";
-                Canvas.ctx.shadowBlur = 4;
+                // Stronger shadow for readability
+                Canvas.ctx.shadowColor = "rgba(0,0,0,1.0)";
+                Canvas.ctx.shadowBlur = 6;
+                Canvas.ctx.shadowOffsetX = 2;
+                Canvas.ctx.shadowOffsetY = 2;
                 Canvas.ctx.fillStyle = this._labelColor(node.type);
-                Canvas.ctx.fillText(node.name, center.x, center.y + 22 * zoom);
+                Canvas.ctx.fillText(node.name, center.x, center.y + 28 * zoom);
                 Canvas.ctx.shadowBlur = 0;
+                Canvas.ctx.shadowOffsetX = 0;
+                Canvas.ctx.shadowOffsetY = 0;
                 Canvas.ctx.textBaseline = "alphabetic";
             }
         }
@@ -300,50 +321,113 @@ class TerrainEngine {
     }
 
     _drawRoom(center, zoom, node) {
-        const rx = 24 * zoom, ry = 14 * zoom;
-        // Glow
+        const rx = 36 * zoom, ry = 22 * zoom; // Increased from 24x14 for better visibility
+        
+        // Shadow for depth
         Canvas.ctx.beginPath();
-        Canvas.ctx.ellipse(center.x, center.y, rx + 8 * zoom, ry + 5 * zoom, 0, 0, Math.PI * 2);
-        Canvas.ctx.fillStyle = "rgba(255,180,50,0.1)";
+        Canvas.ctx.ellipse(center.x + 4, center.y + 4, rx, ry, 0, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(0,0,0,0.4)";
         Canvas.ctx.fill();
-        // Room ellipse
+        
+        // Outer glow
+        Canvas.ctx.beginPath();
+        Canvas.ctx.ellipse(center.x, center.y, rx + 12 * zoom, ry + 8 * zoom, 0, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(255,180,50,0.15)";
+        Canvas.ctx.fill();
+        
+        // Room ellipse with gradient effect
         Canvas.ctx.beginPath();
         Canvas.ctx.ellipse(center.x, center.y, rx, ry, 0, 0, Math.PI * 2);
         Canvas.ctx.fillStyle = "#2a1a0e";
-        Canvas.ctx.strokeStyle = "rgba(255,180,50,0.6)";
-        Canvas.ctx.lineWidth = 1.5 * zoom;
         Canvas.ctx.fill();
+        
+        // Inner highlight for 3D effect
+        Canvas.ctx.beginPath();
+        Canvas.ctx.ellipse(center.x - 2, center.y - 2, rx * 0.7, ry * 0.7, 0, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(80,50,30,0.6)";
+        Canvas.ctx.fill();
+        
+        // Border with enhanced visibility
+        Canvas.ctx.beginPath();
+        Canvas.ctx.ellipse(center.x, center.y, rx, ry, 0, 0, Math.PI * 2);
+        Canvas.ctx.strokeStyle = "rgba(255,180,50,0.8)";
+        Canvas.ctx.lineWidth = 2.5 * zoom;
         Canvas.ctx.stroke();
     }
 
     _drawEntrance(center, zoom) {
-        const r = 12 * zoom;
-        // Glow
+        const r = 18 * zoom; // Increased from 12 for better visibility
+        
+        // Shadow
         Canvas.ctx.beginPath();
-        Canvas.ctx.arc(center.x, center.y, r + 7 * zoom, 0, Math.PI * 2);
-        Canvas.ctx.fillStyle = "rgba(100,200,100,0.12)";
+        Canvas.ctx.arc(center.x + 3, center.y + 3, r, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(0,0,0,0.4)";
         Canvas.ctx.fill();
+        
+        // Outer glow
+        Canvas.ctx.beginPath();
+        Canvas.ctx.arc(center.x, center.y, r + 10 * zoom, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(100,200,100,0.18)";
+        Canvas.ctx.fill();
+        
         // Circle
         Canvas.ctx.beginPath();
         Canvas.ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
         Canvas.ctx.fillStyle = "#0d1f0d";
-        Canvas.ctx.strokeStyle = "#4caf50";
-        Canvas.ctx.lineWidth = 2 * zoom;
         Canvas.ctx.fill();
+        
+        // Inner highlight
+        Canvas.ctx.beginPath();
+        Canvas.ctx.arc(center.x - 2, center.y - 2, r * 0.6, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(30,60,30,0.5)";
+        Canvas.ctx.fill();
+        
+        // Border
+        Canvas.ctx.beginPath();
+        Canvas.ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
+        Canvas.ctx.strokeStyle = "#4caf50";
+        Canvas.ctx.lineWidth = 3 * zoom;
         Canvas.ctx.stroke();
     }
 
     _drawTrap(center, zoom) {
-        const size = 14 * zoom;
+        const size = 20 * zoom; // Increased from 14 for better visibility
+        
+        // Shadow
+        Canvas.ctx.beginPath();
+        Canvas.ctx.moveTo(center.x + 3, center.y - size + 3);
+        Canvas.ctx.lineTo(center.x + size + 3, center.y + size + 3);
+        Canvas.ctx.lineTo(center.x - size + 3, center.y + size + 3);
+        Canvas.ctx.closePath();
+        Canvas.ctx.fillStyle = "rgba(0,0,0,0.4)";
+        Canvas.ctx.fill();
+        
+        // Triangle
         Canvas.ctx.beginPath();
         Canvas.ctx.moveTo(center.x, center.y - size);
         Canvas.ctx.lineTo(center.x + size, center.y + size);
         Canvas.ctx.lineTo(center.x - size, center.y + size);
         Canvas.ctx.closePath();
         Canvas.ctx.fillStyle = "#3d0a0a";
-        Canvas.ctx.strokeStyle = "#ff3b30";
-        Canvas.ctx.lineWidth = 2 * zoom;
         Canvas.ctx.fill();
+        
+        // Inner highlight
+        Canvas.ctx.beginPath();
+        Canvas.ctx.moveTo(center.x, center.y - size * 0.6);
+        Canvas.ctx.lineTo(center.x + size * 0.6, center.y + size * 0.6);
+        Canvas.ctx.lineTo(center.x - size * 0.6, center.y + size * 0.6);
+        Canvas.ctx.closePath();
+        Canvas.ctx.fillStyle = "rgba(100,20,20,0.5)";
+        Canvas.ctx.fill();
+        
+        // Border
+        Canvas.ctx.beginPath();
+        Canvas.ctx.moveTo(center.x, center.y - size);
+        Canvas.ctx.lineTo(center.x + size, center.y + size);
+        Canvas.ctx.lineTo(center.x - size, center.y + size);
+        Canvas.ctx.closePath();
+        Canvas.ctx.strokeStyle = "#ff3b30";
+        Canvas.ctx.lineWidth = 3 * zoom;
         Canvas.ctx.stroke();
     }
 
