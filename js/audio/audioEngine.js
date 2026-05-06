@@ -110,10 +110,9 @@ class AudioEngine {
     }
 
     // Synthesize a trap triggering sound (snapping wood/metal)
-    playTrapSound() {
+    playTrapSound(x = 0, depth = 0) {
         if (!this.ctx || this.isMuted) return;
         
-        // Short, sharp noise burst
         const bufferSize = this.ctx.sampleRate * 0.2; // 0.2 seconds
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -127,21 +126,31 @@ class AudioEngine {
         
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'highpass';
-        filter.frequency.value = 1000; // Snapping sound is high pitched
+        filter.frequency.value = 1000;
         
         const gain = this.ctx.createGain();
         gain.gain.setValueAtTime(1.5, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
         
+        // Spatial Audio
+        const panner = this.ctx.createStereoPanner();
+        panner.pan.value = Math.max(-1, Math.min(1, x / 400));
+        
+        const muffle = this.ctx.createBiquadFilter();
+        muffle.type = 'lowpass';
+        muffle.frequency.value = depth > 100 ? 800 : 20000; // Muffle if underground
+        
         noise.connect(filter);
         filter.connect(gain);
-        gain.connect(this.masterGain);
+        gain.connect(muffle);
+        muffle.connect(panner);
+        panner.connect(this.masterGain);
         
         noise.start();
     }
 
     // Synthesize AK-47 gunfire (burst)
-    playGunfire() {
+    playGunfire(x = 0, depth = 0) {
         if (!this.ctx || this.isMuted) return;
         
         let time = this.ctx.currentTime;
@@ -166,9 +175,18 @@ class AudioEngine {
             gain.gain.setValueAtTime(1.0, time);
             gain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
             
+            const panner = this.ctx.createStereoPanner();
+            panner.pan.value = Math.max(-1, Math.min(1, x / 400));
+            
+            const muffle = this.ctx.createBiquadFilter();
+            muffle.type = 'lowpass';
+            muffle.frequency.value = depth > 100 ? 600 : 20000;
+            
             noise.connect(filter);
             filter.connect(gain);
-            gain.connect(this.masterGain);
+            gain.connect(muffle);
+            muffle.connect(panner);
+            panner.connect(this.masterGain);
             
             noise.start(time);
             time += 0.12; // Time between shots
@@ -206,7 +224,7 @@ class AudioEngine {
     }
 
     // Synthesize digging sound (thud/scrape)
-    playDiggingSound() {
+    playDiggingSound(x = 0, depth = 0) {
         if (!this.ctx || this.isMuted) return;
         
         const bufferSize = this.ctx.sampleRate * 0.15;
@@ -228,9 +246,13 @@ class AudioEngine {
         gain.gain.setValueAtTime(0.8, this.ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
         
+        const panner = this.ctx.createStereoPanner();
+        panner.pan.value = Math.max(-1, Math.min(1, x / 400));
+        
         noise.connect(filter);
         filter.connect(gain);
-        gain.connect(this.masterGain);
+        gain.connect(panner);
+        panner.connect(this.masterGain);
         
         noise.start();
     }
