@@ -1,0 +1,19 @@
+# Node.js
+node_modules/
+npm-debug.log
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# IDEs
+.vscode/
+.idea/
+
+# Temp files
+*.tmp
+*.bak
+*.swp
