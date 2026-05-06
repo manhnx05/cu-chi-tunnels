@@ -108,6 +108,37 @@ class AudioEngine {
             lfo.stop();
         }, 2000);
     }
+
+    // Synthesize a trap triggering sound (snapping wood/metal)
+    playTrapSound() {
+        if (!this.ctx || this.isMuted) return;
+        
+        // Short, sharp noise burst
+        const bufferSize = this.ctx.sampleRate * 0.2; // 0.2 seconds
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * (1 - i/bufferSize); // Decay noise
+        }
+        
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 1000; // Snapping sound is high pitched
+        
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(1.5, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+        
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        
+        noise.start();
+    }
 }
 
 const AudioSys = new AudioEngine();
