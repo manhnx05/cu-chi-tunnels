@@ -19,5 +19,10 @@ const NARRATIONS = {
         title: "Xuất kích tiến công",
         text: "Từ các ngách bí mật và đường hầm nối ra sông Sài Gòn, quân du kích bất ngờ trồi lên mặt đất, tập kích đồn bốt địch rồi nhanh chóng rút lui, tạo nên thế trận thiên la địa võng vô hình.",
         keywords: ["ngách bí mật", "sông Sài Gòn", "tập kích", "thiên la địa võng"]
+    },
+    4: {
+        title: "Di tích lịch sử (Ngày nay)",
+        text: "Chiến tranh lùi xa, Địa đạo Củ Chi nay trở thành Di tích Lịch sử Quốc gia. Một số đoạn hầm được nới rộng và thắp sáng đèn để đón hàng triệu lượt du khách trong và ngoài nước đến tham quan, trải nghiệm.",
+        keywords: ["Di tích Lịch sử", "nới rộng", "thắp sáng đèn", "du khách"]
     }
 };
