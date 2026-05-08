@@ -273,8 +273,8 @@ class EntityPool {
                         entity.progress = 1.0;
                         entity.state = 'idle';
                         entity.waitTime = 2000 + Math.random() * 3000; // wait 2-5 seconds
-                        // Move start to end
-                        entity.start = { ...entity.end };
+                        // Move start to end — include id for _pickNextNode navigation
+                        entity.start = { id: entity.end.id, x: entity.end.x, y: entity.end.y, z: entity.end.z };
                     } else {
                         entity.active = false;
                         this.pool.release(entity);
@@ -369,19 +369,70 @@ class EntityPool {
             const dy = nextScreen.y - screenPos.y;
             const angle = Math.atan2(dy, dx);
 
-            canvasCtx.beginPath();
-            if (entity.type === 'tourist') {
-                canvasCtx.arc(screenPos.x, screenPos.y, 6 * scale * zoom, 0, Math.PI * 2);
-            } else {
-                canvasCtx.ellipse(screenPos.x, screenPos.y, 8 * scale * zoom, 4 * scale * zoom, angle, 0, Math.PI * 2);
-            }
-            
-            canvasCtx.fillStyle = color;
-            canvasCtx.shadowBlur = 15;
-            canvasCtx.shadowColor = color;
-            canvasCtx.fill();
-            canvasCtx.shadowBlur = 0;
+            // Draw human silhouette instead of plain dot
+            this._drawHumanoid(canvasCtx, screenPos, angle, entity.type, color, scale, zoom);
         }
+    }
+    
+    _drawHumanoid(ctx, pos, angle, type, color, scale, zoom) {
+        const s = scale * zoom * 0.9; // size multiplier
+        const lean = Math.cos(angle) * 3 * s; // lean towards direction of movement
+        
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        
+        // Shadow on ground
+        ctx.beginPath();
+        ctx.ellipse(lean * 0.3, 4 * s, 6 * s, 2 * s, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.fill();
+        
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+        
+        // Body (torso)
+        ctx.beginPath();
+        ctx.ellipse(lean, -4 * s, 3.5 * s, 5 * s, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Head
+        ctx.beginPath();
+        ctx.arc(lean, -11 * s, 3 * s, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Helmet or hat based on type
+        if (type === 'enemy') {
+            // US helmet - slightly oval dark
+            ctx.fillStyle = '#2d4020';
+            ctx.beginPath();
+            ctx.ellipse(lean, -13 * s, 3.5 * s, 2 * s, 0, Math.PI, Math.PI * 2);
+            ctx.fill();
+        } else if (type === 'vc') {
+            // Vietnamese hat (conical) 
+            ctx.fillStyle = '#6b5a3a';
+            ctx.beginPath();
+            ctx.moveTo(lean, -17 * s);
+            ctx.lineTo(lean - 4 * s, -9 * s);
+            ctx.lineTo(lean + 4 * s, -9 * s);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Legs (walking animation based on progress)
+        const legSwing = Math.sin(Date.now() * 0.012) * 2 * s;
+        ctx.fillStyle = color;
+        ctx.shadowBlur = 0;
+        
+        ctx.beginPath();
+        ctx.ellipse(lean - 1.5 * s + legSwing, 2 * s, 2 * s, 4.5 * s, 0.1, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(lean + 1.5 * s - legSwing, 2 * s, 2 * s, 4.5 * s, -0.1, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.shadowBlur = 0;
+        ctx.restore();
     }
 
     clear() {
