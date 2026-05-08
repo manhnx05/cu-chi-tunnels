@@ -56,6 +56,22 @@ class App {
         // Init naration text
         this.updateNarration(0);
         
+        // Time Controls
+        const speeds = [1, 2, 4];
+        speeds.forEach(speed => {
+            const btn = document.getElementById(`btn-speed-${speed}x`);
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    if (typeof State !== 'undefined') State.set('simulation.timeScale', speed);
+                    // Update visual state of buttons
+                    speeds.forEach(s => {
+                        const b = document.getElementById(`btn-speed-${s}x`);
+                        if (b) b.style.backgroundColor = (s === speed) ? '#ff3b30' : 'rgba(255, 255, 255, 0.1)';
+                    });
+                });
+            }
+        });
+        
         // Realistic Mode Button
         const btnRealistic = document.getElementById('btn-realistic-mode');
         if (btnRealistic) {
@@ -68,9 +84,17 @@ class App {
                 btnRealistic.style.color = newRealistic ? '#fff' : '#ff3b30';
                 
                 if (newRealistic) {
-                    if (typeof AudioSys !== 'undefined') AudioSys.playHeartbeat();
+                    if (typeof AudioSys !== 'undefined') {
+                        AudioSys.playHeartbeat();
+                        AudioSys.playHeavyBreathing();
+                        AudioSys.playWaterDripping();
+                    }
                 } else {
-                    if (typeof AudioSys !== 'undefined') AudioSys.stopHeartbeat();
+                    if (typeof AudioSys !== 'undefined') {
+                        AudioSys.stopHeartbeat();
+                        AudioSys.stopHeavyBreathing();
+                        AudioSys.stopWaterDripping();
+                    }
                 }
             });
         }

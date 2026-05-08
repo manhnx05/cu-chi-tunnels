@@ -46,6 +46,9 @@ class RendererEngine {
 
         // 5. Render Vignette (Cinematic border shadow)
         this.renderVignette();
+        
+        // 6. Render Minimap
+        this.renderMinimap();
 
         if (Particles.shakeTime > 0) {
             Canvas.ctx.restore();
@@ -181,6 +184,70 @@ class RendererEngine {
         Canvas.ctx.fillStyle = grad;
         Canvas.ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
         Canvas.ctx.restore();
+    }
+    
+    renderMinimap() {
+        const mmCanvas = document.getElementById('minimap-canvas');
+        if (!mmCanvas) return;
+        const ctx = mmCanvas.getContext('2d');
+        const W = mmCanvas.width;
+        const H = mmCanvas.height;
+        
+        // Clear minimap
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, W, H);
+        
+        // Map bounds: x from -1200 to 1200, y from 0 to 1000
+        const mapW = 2400;
+        const mapH = 1000;
+        const scaleX = W / mapW;
+        const scaleY = H / mapH;
+        const offsetX = W / 2;
+        const offsetY = 20; // Surface offset
+        
+        // Draw surface line
+        ctx.beginPath();
+        ctx.moveTo(0, offsetY);
+        ctx.lineTo(W, offsetY);
+        ctx.strokeStyle = '#3a5a2a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Draw tunnels (simplified)
+        ctx.beginPath();
+        if (typeof ROUTES !== 'undefined' && typeof LOCATIONS !== 'undefined') {
+            for (const route of ROUTES) {
+                const sn = LOCATIONS.find(l => l.id === route.startId);
+                const en = LOCATIONS.find(l => l.id === route.endId);
+                if (sn && en) {
+                    ctx.moveTo(sn.x * scaleX + offsetX, sn.y * scaleY + offsetY);
+                    ctx.lineTo(en.x * scaleX + offsetX, en.y * scaleY + offsetY);
+                }
+            }
+        }
+        ctx.strokeStyle = 'rgba(100, 80, 50, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Draw nodes
+        if (typeof LOCATIONS !== 'undefined') {
+            for (const node of LOCATIONS) {
+                ctx.beginPath();
+                ctx.arc(node.x * scaleX + offsetX, node.y * scaleY + offsetY, 2, 0, Math.PI * 2);
+                ctx.fillStyle = node.type === 'trap' ? '#ff6b6b' : (node.type === 'entrance' ? '#7ecf7e' : '#ffd60a');
+                ctx.fill();
+            }
+        }
+        
+        // Draw camera viewport box
+        const camW = CONFIG.CANVAS_WIDTH / CONFIG.CAMERA.zoom;
+        const camH = CONFIG.CANVAS_HEIGHT / CONFIG.CAMERA.zoom;
+        const camX = (CONFIG.CAMERA.x - camW/2) * scaleX + offsetX;
+        const camY = (CONFIG.CAMERA.y - camH/2) * scaleY + offsetY;
+        
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(camX, camY, camW * scaleX, camH * scaleY);
     }
 }
 
