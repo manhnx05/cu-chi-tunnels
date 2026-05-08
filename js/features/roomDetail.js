@@ -170,6 +170,44 @@ class RoomDetail {
                     pests: 'Bọ cạp, nhện độc làm tổ',
                     feeling: 'Nguy cơ cháy nổ nếu bảo quản không tốt, tối đen như mực ("Black Echo").'
                 }
+            },
+            'noi_tru_an_b52': {
+                name: 'Hầm tránh bom B-52',
+                size: { width: 2.5, height: 1.2, depth: 1.5 },
+                capacity: '4-6 người',
+                materials: 'Đất sét đặc quánh tầng sâu',
+                objects: [
+                    { type: 'mat', x: 0, y: 0, z: 0, name: 'Chiếu cói', icon: '🟫' }
+                ],
+                people: [
+                    { x: -5, y: 0, z: 0, activity: 'Trú ẩn', icon: '👤' },
+                    { x: 5, y: 0, z: 0, activity: 'Trú ẩn', icon: '👤' }
+                ],
+                description: 'Tầng sâu nhất (10m), vách đất sét đặc. Chịu được bom B-52 nhưng không khí cực kỳ loãng, nóng hầm hập.',
+                history: [
+                    '1965: Bắt đầu đào sâu xuống 10m',
+                    '1972: Sơ tán tránh bom rải thảm'
+                ]
+            },
+            'kho_luong_thuc': {
+                name: 'Kho lương thực dự trữ',
+                size: { width: 5, height: 1.5, depth: 3 },
+                capacity: '3-4 người',
+                materials: 'Đất nện, hũ sành',
+                objects: [
+                    { type: 'sack', x: -15, y: 0, z: -10, name: 'Bao gạo', icon: '🌾' },
+                    { type: 'sack', x: -15, y: 0, z: 0, name: 'Bao gạo', icon: '🌾' },
+                    { type: 'pot', x: 15, y: 0, z: -10, name: 'Hũ mắm', icon: '🏺' },
+                    { type: 'box', x: 15, y: 0, z: 10, name: 'Thùng thiếc', icon: '📦' }
+                ],
+                people: [
+                    { x: 0, y: 0, z: 0, activity: 'Kiểm kê', icon: '👨' }
+                ],
+                description: 'Gạo, muối, khoai mì cất trong thùng thiếc chống ẩm và chống chuột bọ.',
+                history: [
+                    '1961: Thiết lập kho đầu tiên',
+                    '1969: Chống chuột và mối mọt phá hoại'
+                ]
             }
         };
         
@@ -294,7 +332,7 @@ class RoomDetail {
     checkRoomClick(worldX, worldY) {
         // Check each location to see if click is inside
         for (const location of LOCATIONS) {
-            if (location.type === 'room' && this.roomInteriors[location.id]) {
+            if (this.roomInteriors[location.id]) {
                 // Convert 3D to 2D screen position
                 const screenPos = Projection.to2D(location.x, location.y, location.z);
                 
@@ -314,35 +352,34 @@ class RoomDetail {
     
     openDetailView(roomId) {
         const roomData = this.roomInteriors[roomId];
-        if (!roomData) return;
+        const locationData = LOCATIONS.find(loc => loc.id === roomId);
+        
+        if (!roomData || !locationData) return;
         
         this.activeRoom = roomId;
         this.isDetailView = true;
         this.targetProgress = 1;
         
         // Populate panel
-        document.getElementById('detail-room-name').textContent = roomData.name;
+        document.getElementById('detail-room-name').textContent = locationData.name || roomData.name;
         document.getElementById('detail-size').textContent = 
             `${roomData.size.width}m × ${roomData.size.depth}m × ${roomData.size.height}m`;
-        document.getElementById('detail-capacity').textContent = roomData.capacity;
+        document.getElementById('detail-capacity').textContent = locationData.capacity || roomData.capacity;
         document.getElementById('detail-materials').textContent = roomData.materials;
-        document.getElementById('detail-description').textContent = roomData.description;
+        document.getElementById('detail-description').textContent = locationData.description || roomData.description;
         
-        // Hardships
-        if (roomData.hardships) {
-            document.getElementById('hardship-oxy').textContent = roomData.hardships.oxygen;
-            document.getElementById('hardship-temp').textContent = roomData.hardships.temperature;
-            document.getElementById('hardship-pests').textContent = roomData.hardships.pests;
-            document.getElementById('hardship-feeling').textContent = roomData.hardships.feeling;
-            
-            // Add warning class if oxygen is low
-            const oxyElement = document.getElementById('hardship-oxy').parentElement;
-            if (roomData.hardships.oxygen.toLowerCase().includes('thấp') || roomData.hardships.oxygen.includes('<')) {
-                oxyElement.classList.add('warning-pulse');
-            } else {
-                oxyElement.classList.remove('warning-pulse');
-            }
+        // Hardships from locations.js
+        const hardships = locationData.hardships || roomData.hardships;
+        if (hardships) {
+            document.getElementById('hardship-pests').textContent = hardships.biological || hardships.pests;
+            document.getElementById('hardship-feeling').textContent = hardships.health || hardships.feeling;
         }
+        
+        // Store reference to current room for live updates
+        this.currentRoom = locationData;
+        
+        // Initial live data render
+        this._updateLiveHardships(roomId, hardships);
         
         // History
         const historyList = document.getElementById('detail-history');
@@ -611,6 +648,54 @@ class RoomDetail {
         ctx.stroke();
     }
     
+    _updateLiveHardships(roomId, fallbackHardships) {
+        let o2Text, tempText;
+        
+        // Try to get real-time values from SimulationLogic
+        if (typeof SimulationLogic !== 'undefined' && SimulationLogic.roomStates[roomId]) {
+            const state = SimulationLogic.roomStates[roomId];
+            const o2 = state.oxygen.toFixed(1);
+            const temp = state.temperature.toFixed(1);
+            
+            o2Text = `${o2}% (Thời gian thực 📡)`;
+            tempText = `${temp}°C (Thời gian thực 📡)`;
+            
+            // Color code the O2 indicator
+            const oxyEl = document.getElementById('hardship-oxy');
+            const oxyParent = oxyEl ? oxyEl.parentElement : null;
+            if (oxyParent) {
+                if (state.oxygen < 18) {
+                    oxyParent.classList.add('warning-pulse');
+                    o2Text = `⚠️ ${o2}% — NGUY HIỂM (Thời gian thực)`;
+                } else if (state.oxygen < 21) {
+                    oxyParent.classList.add('warning-pulse');
+                    o2Text = `⚠️ ${o2}% — Thấp (Thời gian thực)`;
+                } else {
+                    oxyParent.classList.remove('warning-pulse');
+                }
+            }
+        } else if (fallbackHardships) {
+            // Fallback to static text from locations.js
+            o2Text = fallbackHardships.oxygen;
+            tempText = fallbackHardships.temperature;
+            
+            const oxyEl = document.getElementById('hardship-oxy');
+            const oxyParent = oxyEl ? oxyEl.parentElement : null;
+            if (oxyParent) {
+                if (fallbackHardships.oxygen && (fallbackHardships.oxygen.toLowerCase().includes('thấp') || fallbackHardships.oxygen.includes('<'))) {
+                    oxyParent.classList.add('warning-pulse');
+                } else {
+                    oxyParent.classList.remove('warning-pulse');
+                }
+            }
+        }
+        
+        const oxyEl = document.getElementById('hardship-oxy');
+        const tempEl = document.getElementById('hardship-temp');
+        if (oxyEl && o2Text) oxyEl.textContent = o2Text;
+        if (tempEl && tempText) tempEl.textContent = tempText;
+    }
+    
     update(dt) {
         // Animate panel transition
         if (this.animationProgress !== this.targetProgress) {
@@ -626,6 +711,12 @@ class RoomDetail {
         // Update detail view rendering if active
         if (this.isDetailView && this.activeRoom) {
             this.renderDetailView();
+            
+            // Live-update O2 and temperature from SimulationLogic
+            const locationData = LOCATIONS.find(loc => loc.id === this.activeRoom);
+            const roomData = this.roomInteriors[this.activeRoom];
+            const hardships = locationData ? (locationData.hardships || (roomData && roomData.hardships)) : null;
+            this._updateLiveHardships(this.activeRoom, hardships);
         }
     }
 }

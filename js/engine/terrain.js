@@ -44,6 +44,10 @@ class TerrainEngine {
         this.dirtPattern = null;
         this.darkDirtPattern = null;
         this._initTextures();
+        
+        // Environment destruction
+        this.craters = []; // {x, z, radius, depth}
+        this.destroyedTrees = new Set(); // store x-coordinates of destroyed trees
     }
     
     _initTextures() {
@@ -273,7 +277,19 @@ class TerrainEngine {
         Canvas.ctx.restore();
     }
 
-    // ── Surface vegetation ───────────────────────────────────────────────────
+    // ── Surface vegetation & Destruction ─────────────────────────────────────
+    
+    addCrater(worldX, worldZ, radius = 40, depth = 20) {
+        this.craters.push({ x: worldX, z: worldZ, radius, depth });
+        
+        // Destroy nearby trees
+        const treePositions = [-500, -340, -150, 120, 340, 490, 680, -680, -850];
+        for (const tx of treePositions) {
+            if (Math.abs(tx - worldX) < radius * 1.5) {
+                this.destroyedTrees.add(tx);
+            }
+        }
+    }
 
     renderSurface() {
         const surfaceY = Projection.project(0, CONFIG.DEPTHS.SURFACE, 0).y;
@@ -286,12 +302,20 @@ class TerrainEngine {
         Canvas.ctx.fillStyle = gGrad;
         Canvas.ctx.fillRect(0, surfaceY - surfaceBand, CONFIG.CANVAS_WIDTH, surfaceBand * 2.5);
 
+        // Draw craters on ground
+        this._drawCraters(surfaceY);
+
         // Trees
         const treePositions = [-500, -340, -150, 120, 340, 490, 680, -680, -850];
         Canvas.ctx.save();
         for (const tx of treePositions) {
             const sp = Projection.project(tx, CONFIG.DEPTHS.SURFACE, 0);
-            this._drawTree(sp.x, sp.y, 36 * CONFIG.CAMERA.zoom);
+            
+            if (this.destroyedTrees.has(tx)) {
+                this._drawDestroyedTree(sp.x, sp.y, 36 * CONFIG.CAMERA.zoom);
+            } else {
+                this._drawTree(sp.x, sp.y, 36 * CONFIG.CAMERA.zoom);
+            }
         }
         Canvas.ctx.restore();
 
@@ -300,6 +324,16 @@ class TerrainEngine {
         Canvas.ctx.strokeStyle = "#4a7c2f";
         Canvas.ctx.lineWidth = 2 * CONFIG.CAMERA.zoom;
         for (let gx = -900; gx < 900; gx += 55) {
+            // Skip grass inside craters
+            let insideCrater = false;
+            for (const c of this.craters) {
+                if (Math.abs(gx - c.x) < c.radius) {
+                    insideCrater = true;
+                    break;
+                }
+            }
+            if (insideCrater) continue;
+            
             const sp = Projection.project(gx, CONFIG.DEPTHS.SURFACE, 0);
             for (let blade = -1; blade <= 1; blade++) {
                 Canvas.ctx.beginPath();
@@ -309,6 +343,64 @@ class TerrainEngine {
             }
         }
         Canvas.ctx.restore();
+    }
+    
+    _drawCraters(surfaceY) {
+        Canvas.ctx.save();
+        const zoom = CONFIG.CAMERA.zoom;
+        
+        for (const crater of this.craters) {
+            const sp = Projection.project(crater.x, CONFIG.DEPTHS.SURFACE, crater.z);
+            
+            // Skip if off-screen
+            if (sp.x < -100 || sp.x > CONFIG.CANVAS_WIDTH + 100) continue;
+            
+            // Draw crater hole (cutout using composite operation or just dark overlay)
+            const rX = crater.radius * zoom;
+            const rY = crater.depth * zoom;
+            
+            // Base dark dirt
+            Canvas.ctx.beginPath();
+            Canvas.ctx.ellipse(sp.x, surfaceY, rX, rY, 0, 0, Math.PI * 2);
+            Canvas.ctx.fillStyle = '#21140e';
+            Canvas.ctx.fill();
+            
+            // Inner shadow
+            Canvas.ctx.beginPath();
+            Canvas.ctx.ellipse(sp.x, surfaceY, rX, rY, 0, 0, Math.PI);
+            Canvas.ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            Canvas.ctx.fill();
+            
+            // Scorched rim
+            Canvas.ctx.beginPath();
+            Canvas.ctx.ellipse(sp.x, surfaceY, rX * 1.2, rY * 0.4, 0, Math.PI, Math.PI * 2);
+            Canvas.ctx.strokeStyle = '#1a0d05';
+            Canvas.ctx.lineWidth = 4 * zoom;
+            Canvas.ctx.stroke();
+            
+            // Rubble
+            Canvas.ctx.fillStyle = '#3d2b20';
+            for (let i = 0; i < 5; i++) {
+                const rx = sp.x + (Math.random() - 0.5) * rX * 1.5;
+                const ry = surfaceY + (Math.random() - 0.5) * rY * 0.5;
+                Canvas.ctx.fillRect(rx, ry, Math.random()*5*zoom, Math.random()*4*zoom);
+            }
+        }
+        Canvas.ctx.restore();
+    }
+    
+    _drawDestroyedTree(sx, sy, h) {
+        // Charred stump
+        Canvas.ctx.fillStyle = "#1a0d05"; // Charred black
+        Canvas.ctx.fillRect(sx - 3 * CONFIG.CAMERA.zoom, sy - h * 0.15, 6 * CONFIG.CAMERA.zoom, h * 0.15);
+        
+        // Jagged broken top
+        Canvas.ctx.beginPath();
+        Canvas.ctx.moveTo(sx - 3 * CONFIG.CAMERA.zoom, sy - h * 0.15);
+        Canvas.ctx.lineTo(sx - 1 * CONFIG.CAMERA.zoom, sy - h * 0.25);
+        Canvas.ctx.lineTo(sx + 2 * CONFIG.CAMERA.zoom, sy - h * 0.12);
+        Canvas.ctx.lineTo(sx + 3 * CONFIG.CAMERA.zoom, sy - h * 0.15);
+        Canvas.ctx.fill();
     }
 
     _drawTree(sx, sy, h) {

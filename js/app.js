@@ -440,6 +440,11 @@ class App {
             AircraftSystemInstance.update(scaledDt);
         }
         
+        // Update simulation logic (O2, Temp, Smoke)
+        if (typeof SimulationLogic !== 'undefined') {
+            SimulationLogic.update(scaledDt);
+        }
+        
         // Update room detail system
         if (typeof RoomDetailInstance !== 'undefined') {
             RoomDetailInstance.update(scaledDt);
