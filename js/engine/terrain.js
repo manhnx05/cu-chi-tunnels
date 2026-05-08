@@ -1,8 +1,8 @@
 class TerrainEngine {
     constructor() {
-        // Thickness ratios per tunnel type (in world-units) - INCREASED for better visibility
-        this.TUNNEL_OUTER = 35; // Increased from 22 for thicker walls
-        this.TUNNEL_INNER = 22; // Increased from 14 for wider tunnels
+        // Thickness ratios per tunnel type (in world-units) - MASSIVELY INCREASED for easy visualization
+        this.TUNNEL_OUTER = 60; // DOUBLED from 35 - Much thicker walls for visibility
+        this.TUNNEL_INNER = 45; // DOUBLED from 22 - Much wider tunnels for clarity
 
         // Earth layer bands
         this.layers = [
@@ -37,8 +37,68 @@ class TerrainEngine {
                 colorBot: "#0a0504",
                 label: "10m — Tầng 3",
                 labelY: CONFIG.DEPTHS.LEVEL_3
-            }
         ];
+        
+        // Procedural Textures
+        this.dirtPattern = null;
+        this.darkDirtPattern = null;
+        this._initTextures();
+    }
+    
+    _initTextures() {
+        // Create off-screen canvas for dirt texture
+        const createTexture = (baseColor, darkColor, lightColor, isDark) => {
+            const size = 128;
+            const cvs = document.createElement('canvas');
+            cvs.width = size;
+            cvs.height = size;
+            const ctx = cvs.getContext('2d');
+            
+            // Base color
+            ctx.fillStyle = baseColor;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Noise
+            for (let i = 0; i < 2000; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                const r = Math.random() * 1.5;
+                
+                ctx.fillStyle = Math.random() > 0.5 ? darkColor : lightColor;
+                ctx.globalAlpha = Math.random() * 0.3;
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Roots / Rocks
+            for (let i = 0; i < 15; i++) {
+                const x = Math.random() * size;
+                const y = Math.random() * size;
+                
+                if (!isDark && Math.random() > 0.6) {
+                    // Roots
+                    ctx.strokeStyle = '#2a1f18';
+                    ctx.globalAlpha = 0.4;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(x + (Math.random()-0.5)*20, y + Math.random()*20);
+                    ctx.stroke();
+                } else {
+                    // Rocks
+                    ctx.fillStyle = isDark ? '#111' : '#3d2b20';
+                    ctx.globalAlpha = 0.5;
+                    ctx.fillRect(x, y, Math.random()*4+2, Math.random()*3+1);
+                }
+            }
+            
+            return cvs;
+        };
+        
+        // Generate patterns once when Canvas is ready (in render to ensure ctx exists)
+        this.dirtCvs = createTexture('#4a3728', '#2a1f18', '#6b513d', false);
+        this.darkDirtCvs = createTexture('#21100a', '#0a0504', '#3d2b20', true);
     }
 
     render() {
@@ -90,9 +150,106 @@ class TerrainEngine {
             Canvas.ctx.fillStyle = grad;
             Canvas.ctx.fill();
 
+            // Blend procedural texture over gradient
+            if (!this.dirtPattern && Canvas.ctx) {
+                this.dirtPattern = Canvas.ctx.createPattern(this.dirtCvs, 'repeat');
+                this.darkDirtPattern = Canvas.ctx.createPattern(this.darkDirtCvs, 'repeat');
+            }
+            
+            if (this.dirtPattern) {
+                Canvas.ctx.save();
+                Canvas.ctx.globalCompositeOperation = 'multiply';
+                Canvas.ctx.globalAlpha = 0.6;
+                Canvas.ctx.fillStyle = (layer.top < CONFIG.DEPTHS.LEVEL_2) ? this.dirtPattern : this.darkDirtPattern;
+                Canvas.ctx.fill();
+                Canvas.ctx.restore();
+            }
+
             // Subtle horizontal striations (sediment lines)
             this._drawStriations(topPt, botPt, topPt2, botPt2, layer.colorTop);
         }
+        
+        // Draw roots hanging from surface
+        this._drawRoots(startX, W);
+        
+        // Draw rat tunnels / ant nests
+        this._drawAnimalTunnels();
+    }
+    
+    _drawRoots(startX, width) {
+        Canvas.ctx.save();
+        Canvas.ctx.strokeStyle = '#3d2817';
+        Canvas.ctx.lineCap = 'round';
+        Canvas.ctx.lineJoin = 'round';
+        
+        // Only draw roots near surface (down to level 1)
+        const surfaceY = Projection.project(0, CONFIG.DEPTHS.SURFACE, 0).y;
+        const maxRootDepth = Projection.project(0, CONFIG.DEPTHS.LEVEL_1 - 100, 0).y - surfaceY;
+        
+        // Use a seeded random approach based on X coordinates to keep them stable
+        for (let x = startX; x < startX + width; x += 150) {
+            // Pseudo-random based on x
+            const r1 = Math.abs(Math.sin(x)) * 100 % 1;
+            
+            if (r1 > 0.3) {
+                const sp = Projection.project(x + r1 * 100, CONFIG.DEPTHS.SURFACE, 0);
+                
+                Canvas.ctx.beginPath();
+                Canvas.ctx.moveTo(sp.x, sp.y);
+                
+                let currX = sp.x;
+                let currY = sp.y;
+                let length = maxRootDepth * (0.3 + r1 * 0.7);
+                let segments = 5 + Math.floor(r1 * 5);
+                let segLen = length / segments;
+                
+                Canvas.ctx.lineWidth = 4 * r1 * CONFIG.CAMERA.zoom;
+                
+                for (let i = 0; i < segments; i++) {
+                    const r2 = Math.abs(Math.cos(x * i)) * 100 % 1;
+                    currX += (r2 - 0.5) * 20 * CONFIG.CAMERA.zoom;
+                    currY += segLen;
+                    Canvas.ctx.lineTo(currX, currY);
+                }
+                Canvas.ctx.stroke();
+            }
+        }
+        Canvas.ctx.restore();
+    }
+    
+    _drawAnimalTunnels() {
+        // Just draw a few fixed rat/ant tunnels for flavor
+        const positions = [
+            { x: -300, y: CONFIG.DEPTHS.LEVEL_1 + 50 },
+            { x: 400, y: CONFIG.DEPTHS.LEVEL_1 - 80 },
+            { x: -800, y: CONFIG.DEPTHS.LEVEL_2 + 100 },
+        ];
+        
+        Canvas.ctx.save();
+        const zoom = CONFIG.CAMERA.zoom;
+        
+        for (const pos of positions) {
+            const sp = Projection.project(pos.x, pos.y, 0);
+            
+            // Small burrow
+            Canvas.ctx.beginPath();
+            Canvas.ctx.ellipse(sp.x, sp.y, 12 * zoom, 8 * zoom, 0, 0, Math.PI * 2);
+            Canvas.ctx.fillStyle = '#110a05';
+            Canvas.ctx.fill();
+            
+            // Meandering path
+            Canvas.ctx.beginPath();
+            Canvas.ctx.moveTo(sp.x, sp.y);
+            Canvas.ctx.bezierCurveTo(
+                sp.x + 30 * zoom, sp.y - 10 * zoom,
+                sp.x + 40 * zoom, sp.y + 20 * zoom,
+                sp.x + 60 * zoom, sp.y + 15 * zoom
+            );
+            Canvas.ctx.lineWidth = 4 * zoom;
+            Canvas.ctx.strokeStyle = '#110a05';
+            Canvas.ctx.stroke();
+        }
+        Canvas.ctx.restore();
     }
 
     _drawStriations(tl, bl, tr, br, baseColor) {
@@ -214,7 +371,16 @@ class TerrainEngine {
             const zoom = CONFIG.CAMERA.zoom;
             const isShaft = route.type === "shaft" || route.type === "entrance_shaft";
 
-            // Outer wall (earth colour)
+            // LAYER 1: Deep shadow for depth perception
+            Canvas.ctx.beginPath();
+            Canvas.ctx.moveTo(p1.x + 2, p1.y + 2);
+            Canvas.ctx.lineTo(p2.x + 2, p2.y + 2);
+            Canvas.ctx.lineWidth = (this.TUNNEL_OUTER + 8) * zoom;
+            Canvas.ctx.strokeStyle = "rgba(0,0,0,0.5)";
+            Canvas.ctx.lineCap = "round";
+            Canvas.ctx.stroke();
+
+            // LAYER 2: Outer earth wall (thick)
             Canvas.ctx.beginPath();
             Canvas.ctx.moveTo(p1.x, p1.y);
             Canvas.ctx.lineTo(p2.x, p2.y);
@@ -223,7 +389,15 @@ class TerrainEngine {
             Canvas.ctx.lineCap = "round";
             Canvas.ctx.stroke();
 
-            // Inner void (dark tunnel bore)
+            // LAYER 3: Mid-tone for 3D effect
+            Canvas.ctx.beginPath();
+            Canvas.ctx.moveTo(p1.x, p1.y);
+            Canvas.ctx.lineTo(p2.x, p2.y);
+            Canvas.ctx.lineWidth = (this.TUNNEL_OUTER * 0.75) * zoom;
+            Canvas.ctx.strokeStyle = isShaft ? "#3a2515" : "#4a3520";
+            Canvas.ctx.stroke();
+
+            // LAYER 4: Inner void (the actual tunnel space - DARK)
             Canvas.ctx.beginPath();
             Canvas.ctx.moveTo(p1.x, p1.y);
             Canvas.ctx.lineTo(p2.x, p2.y);
@@ -231,22 +405,159 @@ class TerrainEngine {
             Canvas.ctx.strokeStyle = isShaft ? "#0d0806" : "#1a0e08";
             Canvas.ctx.stroke();
 
-            // Inner highlight top-edge (simulate curved ceiling) - ENHANCED
+            // LAYER 5: Floor/bottom of tunnel (darker strip at bottom)
+            Canvas.ctx.beginPath();
+            Canvas.ctx.moveTo(p1.x, p1.y + 2);
+            Canvas.ctx.lineTo(p2.x, p2.y + 2);
+            Canvas.ctx.lineWidth = (this.TUNNEL_INNER * 0.4) * zoom;
+            Canvas.ctx.strokeStyle = "rgba(10,5,3,0.8)";
+            Canvas.ctx.stroke();
+
+            // LAYER 6: Ceiling highlight (top edge - shows curved ceiling)
+            Canvas.ctx.beginPath();
+            Canvas.ctx.moveTo(p1.x, p1.y - 1);
+            Canvas.ctx.lineTo(p2.x, p2.y - 1);
+            Canvas.ctx.lineWidth = 5 * zoom;
+            Canvas.ctx.strokeStyle = "rgba(255,200,120,0.18)";
+            Canvas.ctx.stroke();
+            
+            // LAYER 7: Center walkway line (shows path inside tunnel)
             Canvas.ctx.beginPath();
             Canvas.ctx.moveTo(p1.x, p1.y);
             Canvas.ctx.lineTo(p2.x, p2.y);
-            Canvas.ctx.lineWidth = 3 * zoom;
-            Canvas.ctx.strokeStyle = "rgba(255,200,120,0.12)";
+            Canvas.ctx.lineWidth = 2 * zoom;
+            Canvas.ctx.strokeStyle = "rgba(100,80,60,0.4)";
+            Canvas.ctx.setLineDash([8 * zoom, 6 * zoom]);
+            Canvas.ctx.stroke();
+            Canvas.ctx.setLineDash([]);
+            
+            // LAYER 8: Side walls detail (left and right edges)
+            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            const perpX = Math.cos(angle + Math.PI / 2);
+            const perpY = Math.sin(angle + Math.PI / 2);
+            const wallOffset = (this.TUNNEL_INNER * 0.35) * zoom;
+            
+            // Left wall
+            Canvas.ctx.beginPath();
+            Canvas.ctx.moveTo(p1.x + perpX * wallOffset, p1.y + perpY * wallOffset);
+            Canvas.ctx.lineTo(p2.x + perpX * wallOffset, p2.y + perpY * wallOffset);
+            Canvas.ctx.lineWidth = 2 * zoom;
+            Canvas.ctx.strokeStyle = "rgba(80,50,30,0.5)";
             Canvas.ctx.stroke();
             
-            // Bottom shadow for depth
+            // Right wall
             Canvas.ctx.beginPath();
-            Canvas.ctx.moveTo(p1.x, p1.y + 1);
-            Canvas.ctx.lineTo(p2.x, p2.y + 1);
+            Canvas.ctx.moveTo(p1.x - perpX * wallOffset, p1.y - perpY * wallOffset);
+            Canvas.ctx.lineTo(p2.x - perpX * wallOffset, p2.y - perpY * wallOffset);
             Canvas.ctx.lineWidth = 2 * zoom;
-            Canvas.ctx.strokeStyle = "rgba(0,0,0,0.3)";
+            Canvas.ctx.strokeStyle = "rgba(80,50,30,0.5)";
+            Canvas.ctx.stroke();
+            
+            // STRUCTURAL DETAILS
+            if (isShaft) {
+                this._drawLadders(p1, p2, zoom);
+            } else {
+                this._drawTimberProps(p1, p2, zoom, this.TUNNEL_INNER);
+            }
+        }
+    }
+    
+    _drawTimberProps(p1, p2, zoom, tunnelWidth) {
+        // Draw U-shaped wooden supports along the tunnel
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        
+        if (length < 20 * zoom) return; // Too short
+        
+        const angle = Math.atan2(dy, dx);
+        const perpX = Math.cos(angle + Math.PI / 2);
+        const perpY = Math.sin(angle + Math.PI / 2);
+        
+        const spacing = 45 * zoom;
+        const steps = Math.floor(length / spacing);
+        const width = tunnelWidth * zoom * 0.45;
+        
+        Canvas.ctx.save();
+        Canvas.ctx.strokeStyle = '#2b1a10';
+        Canvas.ctx.lineWidth = 4 * zoom;
+        Canvas.ctx.lineCap = 'butt';
+        Canvas.ctx.lineJoin = 'miter';
+        
+        for (let i = 1; i < steps; i++) {
+            const t = i / steps;
+            const cx = p1.x + dx * t;
+            const cy = p1.y + dy * t;
+            
+            // Draw a wooden prop (U shape inside tunnel)
+            Canvas.ctx.beginPath();
+            // Left leg
+            Canvas.ctx.moveTo(cx + perpX * width, cy + perpY * width);
+            // Top beam
+            Canvas.ctx.lineTo(cx + perpX * width - perpY * 5*zoom, cy + perpY * width + perpX * 5*zoom); // curve up
+            Canvas.ctx.lineTo(cx - perpX * width - perpY * 5*zoom, cy - perpY * width + perpX * 5*zoom);
+            // Right leg
+            Canvas.ctx.lineTo(cx - perpX * width, cy - perpY * width);
+            Canvas.ctx.stroke();
+            
+            // Inner highlight
+            Canvas.ctx.beginPath();
+            Canvas.ctx.strokeStyle = '#4a3020';
+            Canvas.ctx.lineWidth = 2 * zoom;
+            Canvas.ctx.moveTo(cx + perpX * width, cy + perpY * width);
+            Canvas.ctx.lineTo(cx + perpX * width - perpY * 4*zoom, cy + perpY * width + perpX * 4*zoom);
+            Canvas.ctx.lineTo(cx - perpX * width - perpY * 4*zoom, cy - perpY * width + perpX * 4*zoom);
+            Canvas.ctx.lineTo(cx - perpX * width, cy - perpY * width);
+            Canvas.ctx.stroke();
+            
+            // Cast a small shadow on the wall
+            Canvas.ctx.beginPath();
+            Canvas.ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+            Canvas.ctx.lineWidth = 6 * zoom;
+            Canvas.ctx.moveTo(cx + perpX * width + dx*0.05, cy + perpY * width + dy*0.05);
+            Canvas.ctx.lineTo(cx - perpX * width + dx*0.05, cy - perpY * width + dy*0.05);
             Canvas.ctx.stroke();
         }
+        Canvas.ctx.restore();
+    }
+    
+    _drawLadders(p1, p2, zoom) {
+        // Draw bamboo rungs in shafts
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const spacing = 15 * zoom;
+        const steps = Math.floor(length / spacing);
+        
+        const angle = Math.atan2(dy, dx);
+        const perpX = Math.cos(angle + Math.PI / 2);
+        const perpY = Math.sin(angle + Math.PI / 2);
+        const width = 12 * zoom;
+        
+        Canvas.ctx.save();
+        Canvas.ctx.strokeStyle = '#a4935e'; // Bamboo color
+        Canvas.ctx.lineWidth = 3 * zoom;
+        Canvas.ctx.lineCap = 'round';
+        
+        for (let i = 1; i < steps; i++) {
+            const t = i / steps;
+            const cx = p1.x + dx * t;
+            const cy = p1.y + dy * t;
+            
+            Canvas.ctx.beginPath();
+            Canvas.ctx.moveTo(cx + perpX * width, cy + perpY * width);
+            Canvas.ctx.lineTo(cx - perpX * width, cy - perpY * width);
+            Canvas.ctx.stroke();
+            
+            // Shadow
+            Canvas.ctx.beginPath();
+            Canvas.ctx.strokeStyle = 'rgba(0,0,0,0.6)';
+            Canvas.ctx.lineWidth = 3 * zoom;
+            Canvas.ctx.moveTo(cx + perpX * width, cy + perpY * width + 2);
+            Canvas.ctx.lineTo(cx - perpX * width, cy - perpY * width + 2);
+            Canvas.ctx.stroke();
+        }
+        Canvas.ctx.restore();
     }
 
     // ── Nodes (rooms & entrances) ─────────────────────────────────────────────
@@ -273,16 +584,16 @@ class TerrainEngine {
 
             // Icon
             if (zoom > 0.4) {
-                const fs = Math.max(14, 24 * zoom); // Increased from 18 for better visibility
+                const fs = Math.max(18, 32 * zoom); // INCREASED from 24 - Much larger icons (+33%)
                 Canvas.ctx.font = `${fs}px serif`;
                 Canvas.ctx.textAlign = "center";
                 Canvas.ctx.textBaseline = "middle";
                 
-                // Icon shadow for depth
-                Canvas.ctx.shadowColor = "rgba(0,0,0,0.8)";
-                Canvas.ctx.shadowBlur = 6;
-                Canvas.ctx.shadowOffsetX = 2;
-                Canvas.ctx.shadowOffsetY = 2;
+                // Icon shadow for depth (stronger)
+                Canvas.ctx.shadowColor = "rgba(0,0,0,1.0)";
+                Canvas.ctx.shadowBlur = 8;
+                Canvas.ctx.shadowOffsetX = 3;
+                Canvas.ctx.shadowOffsetY = 3;
                 Canvas.ctx.fillText(node.icon || "●", center.x, center.y);
                 Canvas.ctx.shadowBlur = 0;
                 Canvas.ctx.shadowOffsetX = 0;
@@ -291,18 +602,18 @@ class TerrainEngine {
 
             // Name label
             if (zoom > 0.4) {
-                const labelSize = Math.max(11, 14 * zoom); // Increased from 11 for better readability
-                Canvas.ctx.font = `700 ${labelSize}px Inter, sans-serif`; // Bolder font
+                const labelSize = Math.max(13, 18 * zoom); // INCREASED from 14 - Much larger labels (+29%)
+                Canvas.ctx.font = `800 ${labelSize}px Inter, sans-serif`; // Extra bold (800)
                 Canvas.ctx.textAlign = "center";
                 Canvas.ctx.textBaseline = "top";
 
                 // Stronger shadow for readability
                 Canvas.ctx.shadowColor = "rgba(0,0,0,1.0)";
-                Canvas.ctx.shadowBlur = 6;
-                Canvas.ctx.shadowOffsetX = 2;
-                Canvas.ctx.shadowOffsetY = 2;
+                Canvas.ctx.shadowBlur = 8;
+                Canvas.ctx.shadowOffsetX = 3;
+                Canvas.ctx.shadowOffsetY = 3;
                 Canvas.ctx.fillStyle = this._labelColor(node.type);
-                Canvas.ctx.fillText(node.name, center.x, center.y + 28 * zoom);
+                Canvas.ctx.fillText(node.name, center.x, center.y + 35 * zoom); // Adjusted offset
                 Canvas.ctx.shadowBlur = 0;
                 Canvas.ctx.shadowOffsetX = 0;
                 Canvas.ctx.shadowOffsetY = 0;
@@ -321,88 +632,221 @@ class TerrainEngine {
     }
 
     _drawRoom(center, zoom, node) {
-        const rx = 36 * zoom, ry = 22 * zoom; // Increased from 24x14 for better visibility
+        const rx = 50 * zoom, ry = 32 * zoom; // INCREASED from 36x22 - Much larger rooms (+40%)
         
-        // Shadow for depth
+        // LAYER 1: Deep shadow for 3D depth
         Canvas.ctx.beginPath();
-        Canvas.ctx.ellipse(center.x + 4, center.y + 4, rx, ry, 0, 0, Math.PI * 2);
-        Canvas.ctx.fillStyle = "rgba(0,0,0,0.4)";
+        Canvas.ctx.ellipse(center.x + 6, center.y + 6, rx + 4, ry + 3, 0, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(0,0,0,0.6)";
         Canvas.ctx.fill();
         
-        // Outer glow
+        // LAYER 2: Outer glow (larger)
         Canvas.ctx.beginPath();
-        Canvas.ctx.ellipse(center.x, center.y, rx + 12 * zoom, ry + 8 * zoom, 0, 0, Math.PI * 2);
-        Canvas.ctx.fillStyle = "rgba(255,180,50,0.15)";
+        Canvas.ctx.ellipse(center.x, center.y, rx + 16 * zoom, ry + 12 * zoom, 0, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(255,180,50,0.2)";
         Canvas.ctx.fill();
         
-        // Room ellipse with gradient effect
+        // LAYER 3: Earth wall around room
+        Canvas.ctx.beginPath();
+        Canvas.ctx.ellipse(center.x, center.y, rx + 8 * zoom, ry + 6 * zoom, 0, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "#3d2710";
+        Canvas.ctx.fill();
+        
+        // LAYER 4: Main room cavity (dark interior)
         Canvas.ctx.beginPath();
         Canvas.ctx.ellipse(center.x, center.y, rx, ry, 0, 0, Math.PI * 2);
-        Canvas.ctx.fillStyle = "#2a1a0e";
+        Canvas.ctx.fillStyle = "#1a0e08";
         Canvas.ctx.fill();
         
-        // Inner highlight for 3D effect
+        // LAYER 5: Floor area (bottom half darker)
+        Canvas.ctx.save();
         Canvas.ctx.beginPath();
-        Canvas.ctx.ellipse(center.x - 2, center.y - 2, rx * 0.7, ry * 0.7, 0, 0, Math.PI * 2);
-        Canvas.ctx.fillStyle = "rgba(80,50,30,0.6)";
+        Canvas.ctx.ellipse(center.x, center.y + ry * 0.3, rx * 0.9, ry * 0.5, 0, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(10,5,3,0.6)";
+        Canvas.ctx.fill();
+        Canvas.ctx.restore();
+        
+        // LAYER 6: Ceiling highlight (top half lighter)
+        Canvas.ctx.save();
+        Canvas.ctx.beginPath();
+        Canvas.ctx.ellipse(center.x, center.y - ry * 0.3, rx * 0.8, ry * 0.4, 0, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(100,70,40,0.4)";
+        Canvas.ctx.fill();
+        Canvas.ctx.restore();
+        
+        // LAYER 7: Inner highlight for 3D curved effect
+        Canvas.ctx.beginPath();
+        Canvas.ctx.ellipse(center.x - 4, center.y - 4, rx * 0.6, ry * 0.6, 0, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(80,50,30,0.5)";
         Canvas.ctx.fill();
         
-        // Border with enhanced visibility
+        // INTERIOR DETAILS
+        this._drawRoomInterior(center, zoom, node);
+        
+        // LAYER 8: Border with enhanced visibility (thicker)
         Canvas.ctx.beginPath();
         Canvas.ctx.ellipse(center.x, center.y, rx, ry, 0, 0, Math.PI * 2);
-        Canvas.ctx.strokeStyle = "rgba(255,180,50,0.8)";
-        Canvas.ctx.lineWidth = 2.5 * zoom;
+        Canvas.ctx.strokeStyle = "rgba(255,180,50,0.9)";
+        Canvas.ctx.lineWidth = 3.5 * zoom;
+        Canvas.ctx.stroke();
+        
+        // LAYER 9: Inner border for depth
+        Canvas.ctx.beginPath();
+        Canvas.ctx.ellipse(center.x, center.y, rx - 3 * zoom, ry - 2 * zoom, 0, 0, Math.PI * 2);
+        Canvas.ctx.strokeStyle = "rgba(150,100,50,0.5)";
+        Canvas.ctx.lineWidth = 1.5 * zoom;
         Canvas.ctx.stroke();
     }
 
     _drawEntrance(center, zoom) {
-        const r = 18 * zoom; // Increased from 12 for better visibility
+        const r = 25 * zoom; // INCREASED from 18 - Much larger entrance (+40%)
         
-        // Shadow
+        // LAYER 1: Deep shadow
         Canvas.ctx.beginPath();
-        Canvas.ctx.arc(center.x + 3, center.y + 3, r, 0, Math.PI * 2);
-        Canvas.ctx.fillStyle = "rgba(0,0,0,0.4)";
+        Canvas.ctx.arc(center.x + 4, center.y + 4, r + 2, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(0,0,0,0.6)";
         Canvas.ctx.fill();
         
-        // Outer glow
+        // LAYER 2: Outer glow (larger)
         Canvas.ctx.beginPath();
-        Canvas.ctx.arc(center.x, center.y, r + 10 * zoom, 0, Math.PI * 2);
-        Canvas.ctx.fillStyle = "rgba(100,200,100,0.18)";
+        Canvas.ctx.arc(center.x, center.y, r + 14 * zoom, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(100,200,100,0.25)";
         Canvas.ctx.fill();
         
-        // Circle
+        // LAYER 3: Earth rim
+        Canvas.ctx.beginPath();
+        Canvas.ctx.arc(center.x, center.y, r + 6 * zoom, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "#2d4a1e";
+        Canvas.ctx.fill();
+        
+        // LAYER 4: Main entrance hole
         Canvas.ctx.beginPath();
         Canvas.ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
         Canvas.ctx.fillStyle = "#0d1f0d";
         Canvas.ctx.fill();
         
-        // Inner highlight
+        // LAYER 5: Inner shadow (depth)
         Canvas.ctx.beginPath();
-        Canvas.ctx.arc(center.x - 2, center.y - 2, r * 0.6, 0, Math.PI * 2);
-        Canvas.ctx.fillStyle = "rgba(30,60,30,0.5)";
+        Canvas.ctx.arc(center.x + 2, center.y + 2, r * 0.7, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(0,0,0,0.5)";
         Canvas.ctx.fill();
         
-        // Border
+        // LAYER 6: Inner highlight (top-left)
+        Canvas.ctx.beginPath();
+        Canvas.ctx.arc(center.x - 3, center.y - 3, r * 0.5, 0, Math.PI * 2);
+        Canvas.ctx.fillStyle = "rgba(30,60,30,0.6)";
+        Canvas.ctx.fill();
+        
+        // LAYER 7: Border (thicker)
         Canvas.ctx.beginPath();
         Canvas.ctx.arc(center.x, center.y, r, 0, Math.PI * 2);
         Canvas.ctx.strokeStyle = "#4caf50";
-        Canvas.ctx.lineWidth = 3 * zoom;
+        Canvas.ctx.lineWidth = 4 * zoom;
         Canvas.ctx.stroke();
+        
+        // LAYER 8: Inner border
+        Canvas.ctx.beginPath();
+        Canvas.ctx.arc(center.x, center.y, r - 3 * zoom, 0, Math.PI * 2);
+        Canvas.ctx.strokeStyle = "rgba(76,175,80,0.5)";
+        Canvas.ctx.lineWidth = 2 * zoom;
+        Canvas.ctx.stroke();
+        
+        // STRUCTURAL DETAILS
+        this._drawSandbags(center, zoom, r);
+    }
+    
+    _drawSandbags(center, zoom, radius) {
+        Canvas.ctx.save();
+        Canvas.ctx.fillStyle = '#bfa573';
+        Canvas.ctx.strokeStyle = '#6e5a35';
+        Canvas.ctx.lineWidth = 1 * zoom;
+        
+        const count = 8;
+        for (let i = 0; i < count; i++) {
+            const angle = (i / count) * Math.PI * 2;
+            // Only draw sandbags on the top half (surface side)
+            if (angle > Math.PI * 0.2 && angle < Math.PI * 0.8) continue;
+            
+            const sx = center.x + Math.cos(angle) * (radius + 2*zoom);
+            const sy = center.y + Math.sin(angle) * (radius + 2*zoom);
+            
+            Canvas.ctx.beginPath();
+            Canvas.ctx.ellipse(sx, sy, 6*zoom, 3.5*zoom, angle, 0, Math.PI*2);
+            Canvas.ctx.fill();
+            Canvas.ctx.stroke();
+        }
+        Canvas.ctx.restore();
+    }
+    
+    _drawRoomInterior(center, zoom, node) {
+        // Read from RoomDetailInstance if available, else fallback to hardcoded
+        let interiors = [];
+        if (typeof RoomDetailInstance !== 'undefined' && RoomDetailInstance.roomInteriors[node.id]) {
+            interiors = RoomDetailInstance.roomInteriors[node.id].objects;
+        }
+        
+        if (!interiors || interiors.length === 0) return;
+        
+        Canvas.ctx.save();
+        Canvas.ctx.font = `${Math.max(10, 16 * zoom)}px sans-serif`;
+        Canvas.ctx.textAlign = 'center';
+        Canvas.ctx.textBaseline = 'middle';
+        
+        // Draw miniature objects based on their X position in the room
+        for (const obj of interiors) {
+            // map from -30..30 room coordinates to screen coordinates
+            const offsetX = obj.x * zoom * 0.8;
+            const offsetY = (obj.y || 10) * zoom; // push them slightly down to sit on floor
+            
+            const px = center.x + offsetX;
+            const py = center.y + offsetY;
+            
+            // Draw a subtle shadow for the object
+            Canvas.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            Canvas.ctx.beginPath();
+            Canvas.ctx.ellipse(px, py + 8*zoom, 10*zoom, 3*zoom, 0, 0, Math.PI*2);
+            Canvas.ctx.fill();
+            
+            // Draw the icon
+            Canvas.ctx.fillText(obj.icon, px, py);
+            
+            // If it's a stove/fire, draw a light glow
+            if (obj.icon === '🔥' || obj.type === 'stove') {
+                const flicker = Math.random() * 0.2 + 0.8;
+                Canvas.ctx.beginPath();
+                Canvas.ctx.arc(px, py, 20 * zoom * flicker, 0, Math.PI * 2);
+                const grad = Canvas.ctx.createRadialGradient(px, py, 0, px, py, 20 * zoom);
+                grad.addColorStop(0, 'rgba(255,150,0,0.6)');
+                grad.addColorStop(1, 'rgba(255,100,0,0)');
+                Canvas.ctx.fillStyle = grad;
+                Canvas.ctx.fill();
+            }
+        }
+        Canvas.ctx.restore();
     }
 
     _drawTrap(center, zoom) {
-        const size = 20 * zoom; // Increased from 14 for better visibility
+        const size = 28 * zoom; // INCREASED from 20 - Much larger trap (+40%)
         
-        // Shadow
+        // LAYER 1: Deep shadow
         Canvas.ctx.beginPath();
-        Canvas.ctx.moveTo(center.x + 3, center.y - size + 3);
-        Canvas.ctx.lineTo(center.x + size + 3, center.y + size + 3);
-        Canvas.ctx.lineTo(center.x - size + 3, center.y + size + 3);
+        Canvas.ctx.moveTo(center.x + 4, center.y - size + 4);
+        Canvas.ctx.lineTo(center.x + size + 4, center.y + size + 4);
+        Canvas.ctx.lineTo(center.x - size + 4, center.y + size + 4);
         Canvas.ctx.closePath();
-        Canvas.ctx.fillStyle = "rgba(0,0,0,0.4)";
+        Canvas.ctx.fillStyle = "rgba(0,0,0,0.6)";
         Canvas.ctx.fill();
         
-        // Triangle
+        // LAYER 2: Outer glow
+        Canvas.ctx.beginPath();
+        Canvas.ctx.moveTo(center.x, center.y - (size + 8 * zoom));
+        Canvas.ctx.lineTo(center.x + (size + 8 * zoom), center.y + (size + 8 * zoom));
+        Canvas.ctx.lineTo(center.x - (size + 8 * zoom), center.y + (size + 8 * zoom));
+        Canvas.ctx.closePath();
+        Canvas.ctx.fillStyle = "rgba(255,50,50,0.2)";
+        Canvas.ctx.fill();
+        
+        // LAYER 3: Main triangle (dark red)
         Canvas.ctx.beginPath();
         Canvas.ctx.moveTo(center.x, center.y - size);
         Canvas.ctx.lineTo(center.x + size, center.y + size);
@@ -411,23 +855,33 @@ class TerrainEngine {
         Canvas.ctx.fillStyle = "#3d0a0a";
         Canvas.ctx.fill();
         
-        // Inner highlight
+        // LAYER 4: Inner highlight
         Canvas.ctx.beginPath();
         Canvas.ctx.moveTo(center.x, center.y - size * 0.6);
         Canvas.ctx.lineTo(center.x + size * 0.6, center.y + size * 0.6);
         Canvas.ctx.lineTo(center.x - size * 0.6, center.y + size * 0.6);
         Canvas.ctx.closePath();
-        Canvas.ctx.fillStyle = "rgba(100,20,20,0.5)";
+        Canvas.ctx.fillStyle = "rgba(100,20,20,0.6)";
         Canvas.ctx.fill();
         
-        // Border
+        // LAYER 5: Border (thicker)
         Canvas.ctx.beginPath();
         Canvas.ctx.moveTo(center.x, center.y - size);
         Canvas.ctx.lineTo(center.x + size, center.y + size);
         Canvas.ctx.lineTo(center.x - size, center.y + size);
         Canvas.ctx.closePath();
         Canvas.ctx.strokeStyle = "#ff3b30";
-        Canvas.ctx.lineWidth = 3 * zoom;
+        Canvas.ctx.lineWidth = 4 * zoom;
+        Canvas.ctx.stroke();
+        
+        // LAYER 6: Inner border
+        Canvas.ctx.beginPath();
+        Canvas.ctx.moveTo(center.x, center.y - size * 0.85);
+        Canvas.ctx.lineTo(center.x + size * 0.85, center.y + size * 0.85);
+        Canvas.ctx.lineTo(center.x - size * 0.85, center.y + size * 0.85);
+        Canvas.ctx.closePath();
+        Canvas.ctx.strokeStyle = "rgba(255,59,48,0.5)";
+        Canvas.ctx.lineWidth = 2 * zoom;
         Canvas.ctx.stroke();
     }
 
