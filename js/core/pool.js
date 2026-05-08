@@ -200,17 +200,20 @@ class EntityPool {
             // Create function
             () => ({
                 type: 'vc',
-                start: { x: 0, y: 0, z: 0 },
-                end: { x: 0, y: 0, z: 0 },
+                start: { id: '', x: 0, y: 0, z: 0 },
+                end: { id: '', x: 0, y: 0, z: 0 },
                 progress: 0,
                 speed: 0,
                 active: false,
+                state: 'patrol',
+                waitTime: 0,
                 trail: []
             }),
             // Reset function
             (entity) => {
                 entity.active = false;
                 entity.progress = 0;
+                entity.waitTime = 0;
                 entity.trail = [];
             },
             50 // Initial pool size
@@ -221,11 +224,13 @@ class EntityPool {
         const entity = this.pool.acquire();
         
         entity.type = type;
-        entity.start = { x: startNode.x, y: startNode.y, z: startNode.z };
-        entity.end = { x: endNode.x, y: endNode.y, z: endNode.z };
+        entity.start = { id: startNode.id, x: startNode.x, y: startNode.y, z: startNode.z };
+        entity.end = { id: endNode.id, x: endNode.x, y: endNode.y, z: endNode.z };
         entity.progress = 0;
         entity.speed = 1 / durationMs;
         entity.active = true;
+        entity.state = 'patrol';
+        entity.waitTime = 0;
         entity.trail = [];
         
         return entity;
@@ -237,6 +242,16 @@ class EntityPool {
         for (let entity of active) {
             if (!entity.active) continue;
 
+            if (entity.state === 'idle') {
+                entity.waitTime -= dt;
+                if (entity.waitTime <= 0) {
+                    entity.state = 'patrol';
+                    // Pick next node
+                    this._pickNextNode(entity);
+                }
+                continue;
+            }
+
             entity.progress += entity.speed * dt;
             
             // Record trail
@@ -246,14 +261,48 @@ class EntityPool {
             }
             
             if (entity.progress >= 1.0) {
-                entity.active = false;
-                
                 // Callback for completion events (e.g., trap triggered)
+                let shouldRelease = true;
                 if (onComplete) {
-                    onComplete(entity);
+                    shouldRelease = onComplete(entity) !== false; // If onComplete returns exactly false, don't release
                 }
                 
-                this.pool.release(entity);
+                if (shouldRelease) {
+                    // Try to continue patrol instead of dying
+                    if (entity.type === 'vc' || entity.type === 'digger' || entity.type === 'tourist') {
+                        entity.progress = 1.0;
+                        entity.state = 'idle';
+                        entity.waitTime = 2000 + Math.random() * 3000; // wait 2-5 seconds
+                        // Move start to end
+                        entity.start = { ...entity.end };
+                    } else {
+                        entity.active = false;
+                        this.pool.release(entity);
+                    }
+                }
+            }
+        }
+    }
+    
+    _pickNextNode(entity) {
+        if (typeof ROUTES === 'undefined' || typeof LOCATIONS === 'undefined') return;
+        
+        const possibleRoutes = ROUTES.filter(r => r.startId === entity.start.id || r.endId === entity.start.id);
+        if (possibleRoutes.length > 0) {
+            const route = possibleRoutes[Math.floor(Math.random() * possibleRoutes.length)];
+            const nextNodeId = (route.startId === entity.start.id) ? route.endId : route.startId;
+            const nextNode = LOCATIONS.find(l => l.id === nextNodeId);
+            
+            if (nextNode) {
+                entity.end = { id: nextNode.id, x: nextNode.x, y: nextNode.y, z: nextNode.z };
+                entity.progress = 0;
+                entity.trail = [];
+                // Recalculate speed based on distance
+                const dx = entity.end.x - entity.start.x;
+                const dy = entity.end.y - entity.start.y;
+                const dz = entity.end.z - entity.start.z;
+                const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                entity.speed = 1 / (dist * 10); // 10ms per unit of distance
             }
         }
     }
