@@ -58,16 +58,24 @@ class App {
         
         // Time Controls
         const speeds = [1, 2, 4];
+        
+        // Set default active (1x)
+        const updateSpeedButtons = (activeSpeed) => {
+            speeds.forEach(s => {
+                const b = document.getElementById(`btn-speed-${s}x`);
+                if (b) {
+                    b.classList.toggle('active-speed', s === activeSpeed);
+                }
+            });
+        };
+        updateSpeedButtons(1); // Default 1x highlighted
+        
         speeds.forEach(speed => {
             const btn = document.getElementById(`btn-speed-${speed}x`);
             if (btn) {
                 btn.addEventListener('click', () => {
                     if (typeof State !== 'undefined') State.set('simulation.timeScale', speed);
-                    // Update visual state of buttons
-                    speeds.forEach(s => {
-                        const b = document.getElementById(`btn-speed-${s}x`);
-                        if (b) b.style.backgroundColor = (s === speed) ? '#ff3b30' : 'rgba(255, 255, 255, 0.1)';
-                    });
+                    updateSpeedButtons(speed);
                 });
             }
         });
@@ -116,9 +124,44 @@ class App {
             setTimeout(() => this.isSweeping = false, 3000); // 3 seconds sweep
         }
         
+        // --- Phase Transition Flash Overlay ---
+        this.showPhaseTransition(phase);
+    }
+    
+    showPhaseTransition(phase) {
+        const PHASE_LABELS = [
+            { title: 'TOÀN CẢNH', sub: 'Hệ thống Địa đạo 250km' },
+            { title: 'SINH HOẠT', sub: 'Cuộc sống dưới lòng đất 1965–1972' },
+            { title: 'CHỐNG CÀN', sub: 'Chiến dịch Cedar Falls · Tháng 1/1967' },
+            { title: 'XUẤT KÍCH', sub: 'Tấn công phản kích từ lòng đất' },
+            { title: 'DI TÍCH', sub: 'Địa đạo ngày nay · Di sản lịch sử' },
+            { title: 'KIẾN THIẾT', sub: 'Đào và xây dựng hệ thống' },
+        ];
+        
+        const overlay = document.getElementById('phase-transition-overlay');
+        const titleEl = document.getElementById('overlay-phase-title');
+        const subtitleEl = document.getElementById('overlay-phase-subtitle');
+        if (!overlay || !titleEl || !subtitleEl) return;
+        
+        const label = PHASE_LABELS[phase] || { title: `GIAI ĐOẠN ${phase}`, sub: '' };
+        titleEl.textContent = label.title;
+        subtitleEl.textContent = label.sub;
+        
+        // Animate: show → hold → fade out
+        overlay.classList.remove('fade-out');
+        overlay.classList.add('visible');
+        
+        clearTimeout(this._overlayTimer);
+        this._overlayTimer = setTimeout(() => {
+            overlay.classList.add('fade-out');
+            setTimeout(() => {
+                overlay.classList.remove('visible', 'fade-out');
+            }, 900);
+        }, 2200);
+        
         // Speak narration if not muted
         if (Narrator.synth) {
-            Narrator.speak(NARRATIONS[phase].text);
+            setTimeout(() => Narrator.speak(NARRATIONS[phase].text), 400);
         }
 
         // Trigger Phase specific visual/audio effects

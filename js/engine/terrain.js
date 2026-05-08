@@ -119,11 +119,78 @@ class TerrainEngine {
 
     renderSky() {
         const surfaceY = Projection.project(0, CONFIG.DEPTHS.SURFACE, 0).y;
+        const phase = (typeof window.AppInstance !== 'undefined') ? window.AppInstance.currentPhase : 0;
+        const t = Date.now() / 1000;
+        
+        // Phase-aware sky palette
+        let skyTop, skyBot;
+        if (phase === 2 || phase === 3) {
+            // War phase — smoke-tinged orange-red
+            skyTop = `hsl(${10 + Math.sin(t*0.1)*5}, 45%, ${8 + Math.sin(t*0.08)*2}%)`;
+            skyBot = `hsl(${25 + Math.sin(t*0.12)*8}, 30%, ${14}%)`;
+        } else if (phase === 4) {
+            // Peace phase — blue morning sky
+            skyTop = '#0b1a2e';
+            skyBot = '#1e4a3a';
+        } else {
+            // Default — deep jungle night
+            skyTop = '#0d1520';
+            skyBot = '#1e3a2a';
+        }
+        
         const grad = Canvas.ctx.createLinearGradient(0, 0, 0, surfaceY);
-        grad.addColorStop(0, "#0d1520");
-        grad.addColorStop(1, "#1e3a2a");
+        grad.addColorStop(0, skyTop);
+        grad.addColorStop(1, skyBot);
         Canvas.ctx.fillStyle = grad;
         Canvas.ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, surfaceY);
+        
+        // Drifting clouds (only during peaceful phases)
+        if (phase !== 2 && phase !== 3 && surfaceY > 30) {
+            Canvas.ctx.save();
+            Canvas.ctx.globalAlpha = 0.12;
+            Canvas.ctx.fillStyle = '#c8d8c0';
+            
+            const clouds = [
+                { ox: 0.1,  oy: 0.15, rx: 120, ry: 28, speed: 0.012 },
+                { ox: 0.45, oy: 0.25, rx: 80,  ry: 18, speed: 0.008 },
+                { ox: 0.75, oy: 0.12, rx: 150, ry: 35, speed: 0.015 },
+                { ox: 0.3,  oy: 0.5,  rx: 60,  ry: 14, speed: 0.010 },
+            ];
+            
+            const W = CONFIG.CANVAS_WIDTH;
+            for (const c of clouds) {
+                const cx = ((c.ox * W + t * c.speed * W * 0.5) % W + W) % W;
+                const cy = c.oy * surfaceY;
+                const zoom = CONFIG.CAMERA.zoom;
+                
+                Canvas.ctx.beginPath();
+                Canvas.ctx.ellipse(cx, cy, c.rx * zoom, c.ry * zoom, 0, 0, Math.PI * 2);
+                Canvas.ctx.fill();
+                
+                // Second puff next to cloud
+                Canvas.ctx.beginPath();
+                Canvas.ctx.ellipse(cx + c.rx * zoom * 0.6, cy - c.ry * zoom * 0.3, c.rx * zoom * 0.6, c.ry * zoom * 0.8, 0, 0, Math.PI * 2);
+                Canvas.ctx.fill();
+            }
+            
+            Canvas.ctx.restore();
+        }
+        
+        // War smoke billowing on horizon (phase 2 and 3)
+        if (phase === 2 || phase === 3) {
+            Canvas.ctx.save();
+            const smokePositions = [-600, -200, 300, 700];
+            for (const sx of smokePositions) {
+                const sp = Projection.project(sx, CONFIG.DEPTHS.SURFACE, 0);
+                const puff = 0.5 + Math.sin(t * 0.3 + sx * 0.01) * 0.15;
+                Canvas.ctx.globalAlpha = puff * 0.3;
+                Canvas.ctx.fillStyle = '#3a3028';
+                Canvas.ctx.beginPath();
+                Canvas.ctx.ellipse(sp.x, sp.y - 40 * CONFIG.CAMERA.zoom, 50 * CONFIG.CAMERA.zoom, 60 * CONFIG.CAMERA.zoom, 0, 0, Math.PI * 2);
+                Canvas.ctx.fill();
+            }
+            Canvas.ctx.restore();
+        }
     }
 
     // ── Earth cross-section ──────────────────────────────────────────────────

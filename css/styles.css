@@ -812,4 +812,147 @@ header p {
     .timeline-year {
         font-size: 36px;
     }
+    
+    /* Mobile: room detail panel takes full width */
+    .room-detail-panel {
+        width: 100vw;
+        right: -100vw;
+    }
+    
+    /* Mobile: hide camera d-pad, rely on touch */
+    #camera-controls .d-pad {
+        display: none;
+    }
+    
+    /* Mobile: minimap smaller */
+    #minimap-container {
+        width: 180px !important;
+        height: 110px !important;
+    }
 }
+
+/* ── Phase Transition Flash Overlay ───────────────────────────── */
+#phase-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: radial-gradient(ellipse at center,
+        rgba(0,0,0,0.92) 0%,
+        rgba(0,0,0,0.6) 60%,
+        transparent 100%);
+}
+
+#phase-transition-overlay.visible {
+    opacity: 1;
+}
+
+#phase-transition-overlay.fade-out {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+}
+
+.phase-overlay-badge {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin-bottom: 10px;
+    animation: slideDown 0.4s ease;
+}
+
+.phase-overlay-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 52px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #fff;
+    text-transform: uppercase;
+    text-shadow: 0 0 40px rgba(255, 214, 10, 0.6), 0 4px 20px rgba(0,0,0,0.8);
+    animation: zoomIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.phase-overlay-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 8px;
+    letter-spacing: 1px;
+    animation: slideUp 0.5s ease 0.1s both;
+}
+
+.phase-overlay-line {
+    width: 200px;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--accent-gold), transparent);
+    margin: 16px auto;
+    animation: expandWidth 0.6s ease;
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.5); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes slideDown {
+    from { transform: translateY(-20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 0.7; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 0.6; }
+}
+
+@keyframes expandWidth {
+    from { width: 0; }
+    to   { width: 200px; }
+}
+
+/* ── Live O2 badge in tooltip ───────────────────────────────────── */
+.tooltip-o2-badge {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Roboto Mono', monospace;
+    letter-spacing: 1px;
+}
+
+.tooltip-o2-badge.ok  { background: rgba(50, 160, 80, 0.3); color: #7eff99; border: 1px solid rgba(50,160,80,0.5); }
+.tooltip-o2-badge.low { background: rgba(255,160,10,0.3);  color: #ffcc44; border: 1px solid rgba(255,160,10,0.5); animation: warning-pulse 1s infinite; }
+.tooltip-o2-badge.danger { background: rgba(200,30,30,0.4); color: #ff6666; border: 1px solid rgba(200,30,30,0.6); animation: warning-pulse 0.5s infinite; }
+
+/* ── Time controls visual active state ─────────────────────────── */
+#camera-controls .time-controls {
+    display: flex;
+    gap: 5px;
+}
+
+#btn-speed-1x, #btn-speed-2x, #btn-speed-4x {
+    background: rgba(255, 255, 255, 0.08);
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 700;
+    transition: background 0.2s, transform 0.1s;
+}
+
+#btn-speed-1x.active-speed,
+#btn-speed-2x.active-speed,
+#btn-speed-4x.active-speed {
+    background: rgba(255, 60, 48, 0.35);
+    color: #ff6b6b;
+    border-color: rgba(255, 60, 48, 0.6);
+    box-shadow: 0 0 8px rgba(255,60,48,0.4);
+}
+
