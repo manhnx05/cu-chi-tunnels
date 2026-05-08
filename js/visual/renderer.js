@@ -120,52 +120,67 @@ class RendererEngine {
         Canvas.ctx.globalCompositeOperation = 'destination-out';
         
         // 1. Light up infrastructure nodes (rooms)
+        const LIT_TYPES = new Set(['infrastructure', 'room', 'medical', 'command', 'kitchen', 'storage', 'hospital', 'printing', 'art', 'water']);
         for (const node of LOCATIONS) {
-            if (node.type === 'infrastructure') {
-                const screenPos = Projection.project(node.x, node.y, node.z);
-                
-                // Flicker Effect using Math.sin and time
-                const time = Date.now() / 150;
-                const flicker = Math.sin(time + node.x) * 0.05 + Math.sin(time * 0.7 + node.y) * 0.05;
-                
-                // In realistic mode, lights are much smaller (oil lamps)
-                const baseRadius = isRealistic ? 60 : 160;
-                const flickerAmt = isRealistic ? 10 : 25;
-                const radius = (baseRadius + flicker * flickerAmt) * CONFIG.CAMERA.zoom;
-                
-                const grad = Canvas.ctx.createRadialGradient(screenPos.x, screenPos.y, 0, screenPos.x, screenPos.y, radius);
-                grad.addColorStop(0, `rgba(255, 220, 150, ${1.2 + flicker})`); // Brighter center
-                grad.addColorStop(isRealistic ? 0.2 : 0.5, `rgba(255, 200, 120, ${0.4 + flicker * 0.5})`); // Mid-tone
-                grad.addColorStop(1, 'rgba(255, 220, 150, 0)');
-                
-                Canvas.ctx.beginPath();
-                Canvas.ctx.arc(screenPos.x, screenPos.y, radius, 0, Math.PI * 2);
-                Canvas.ctx.fillStyle = grad;
-                Canvas.ctx.fill();
-            }
+            // Underground rooms get a warm oil-lamp glow
+            // Surface entrances get a dim ambient glow
+            const isUnderground = node.y < CONFIG.DEPTHS.SURFACE - 10;
+            if (!LIT_TYPES.has(node.type) && isUnderground) continue;
+            if (!isUnderground) continue; // Surface nodes don't emit light underground
+            
+            const screenPos = Projection.project(node.x, node.y, node.z);
+            
+            // Flicker Effect using Math.sin and time
+            const time = Date.now() / 150;
+            const flicker = Math.sin(time + node.x) * 0.05 + Math.sin(time * 0.7 + node.y) * 0.05;
+            
+            // In realistic mode, lights are much smaller (oil lamps)
+            const baseRadius = isRealistic ? 55 : 140;
+            const flickerAmt = isRealistic ? 8 : 20;
+            const radius = (baseRadius + flicker * flickerAmt) * CONFIG.CAMERA.zoom;
+            
+            // Warm amber gradient for oil lamp
+            const grad = Canvas.ctx.createRadialGradient(screenPos.x, screenPos.y, 0, screenPos.x, screenPos.y, radius);
+            grad.addColorStop(0, `rgba(255, 230, 160, ${1.0 + flicker})`);
+            grad.addColorStop(0.3, `rgba(255, 180, 80, ${0.5 + flicker * 0.3})`);
+            grad.addColorStop(1, 'rgba(255, 140, 40, 0)');
+            
+            Canvas.ctx.beginPath();
+            Canvas.ctx.arc(screenPos.x, screenPos.y, radius, 0, Math.PI * 2);
+            Canvas.ctx.fillStyle = grad;
+            Canvas.ctx.fill();
         }
         
         // 2. Light halos around moving entities (like carrying torches/flashlights)
-        if (typeof Entities !== 'undefined') {
-            for (const ent of Entities.entities) {
-                if (!ent.active) continue;
-                
-                const x = ent.start.x + (ent.end.x - ent.start.x) * ent.progress;
-                const y = ent.start.y + (ent.end.y - ent.start.y) * ent.progress;
-                const z = ent.start.z + (ent.end.z - ent.start.z) * ent.progress;
-                
-                const screenPos = Projection.project(x, y, z);
-                const radius = 60 * CONFIG.CAMERA.zoom;
-                
-                const grad = Canvas.ctx.createRadialGradient(screenPos.x, screenPos.y, 0, screenPos.x, screenPos.y, radius);
-                grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
-                grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-                
-                Canvas.ctx.beginPath();
-                Canvas.ctx.arc(screenPos.x, screenPos.y, radius, 0, Math.PI * 2);
-                Canvas.ctx.fillStyle = grad;
-                Canvas.ctx.fill();
-            }
+        const activeEntities = (typeof EntityPoolInstance !== 'undefined') 
+            ? EntityPoolInstance.pool.active 
+            : (typeof Entities !== 'undefined' ? Entities.entities : []);
+        
+        for (const ent of activeEntities) {
+            if (!ent.active) continue;
+            
+            const x = ent.start.x + (ent.end.x - ent.start.x) * ent.progress;
+            const y = ent.start.y + (ent.end.y - ent.start.y) * ent.progress;
+            const z = ent.start.z + (ent.end.z - ent.start.z) * ent.progress;
+            
+            // Only light underground entities
+            if (y >= CONFIG.DEPTHS.SURFACE - 50) continue;
+            
+            const screenPos = Projection.project(x, y, z);
+            
+            // Enemy = white flashlight, VC = warm torchlight
+            const isEnemy = ent.type === 'enemy';
+            const radius = (isEnemy ? 50 : 35) * CONFIG.CAMERA.zoom;
+            const color = isEnemy ? '255, 255, 255' : '255, 200, 100';
+            
+            const grad = Canvas.ctx.createRadialGradient(screenPos.x, screenPos.y, 0, screenPos.x, screenPos.y, radius);
+            grad.addColorStop(0, `rgba(${color}, 0.9)`);
+            grad.addColorStop(1, `rgba(${color}, 0)`);
+            
+            Canvas.ctx.beginPath();
+            Canvas.ctx.arc(screenPos.x, screenPos.y, radius, 0, Math.PI * 2);
+            Canvas.ctx.fillStyle = grad;
+            Canvas.ctx.fill();
         }
         
         Canvas.ctx.restore();
@@ -193,61 +208,120 @@ class RendererEngine {
         const W = mmCanvas.width;
         const H = mmCanvas.height;
         
-        // Clear minimap
-        ctx.fillStyle = '#0a0a0a';
+        // Clear minimap with grid background
+        ctx.fillStyle = '#060a06';
         ctx.fillRect(0, 0, W, H);
         
-        // Map bounds: x from -1200 to 1200, y from 0 to 1000
-        const mapW = 2400;
-        const mapH = 1000;
-        const scaleX = W / mapW;
-        const scaleY = H / mapH;
-        const offsetX = W / 2;
-        const offsetY = 20; // Surface offset
+        // Map world bounds
+        // X: -1200 to 1200, Y: SURFACE(0) to LEVEL_3(-2000)
+        const worldXMin = -1200, worldXMax = 1200;
+        const worldYMin = CONFIG.DEPTHS.LEVEL_3 - 300; // deepest
+        const worldYMax = CONFIG.DEPTHS.SURFACE + 50;  // surface top
+        const worldW = worldXMax - worldXMin;
+        const worldH = worldYMax - worldYMin;
         
-        // Draw surface line
-        ctx.beginPath();
-        ctx.moveTo(0, offsetY);
-        ctx.lineTo(W, offsetY);
-        ctx.strokeStyle = '#3a5a2a';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Grid lines
+        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+        ctx.lineWidth = 0.5;
+        for (let gx = 0; gx <= W; gx += W/8) {
+            ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, H); ctx.stroke();
+        }
+        for (let gy = 0; gy <= H; gy += H/5) {
+            ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(W, gy); ctx.stroke();
+        }
         
-        // Draw tunnels (simplified)
-        ctx.beginPath();
+        // World-to-minimap coordinate transform
+        const toMM = (wx, wy) => ({
+            x: ((wx - worldXMin) / worldW) * W,
+            // World Y is negative going down, minimap Y is positive going down
+            y: ((worldYMax - wy) / worldH) * H
+        });
+        
+        // Depth level lines
+        const depthLines = [
+            { y: CONFIG.DEPTHS.SURFACE, label: 'Mặt đất', color: '#3a5a2a' },
+            { y: CONFIG.DEPTHS.LEVEL_1, label: 'Tầng 1', color: '#6b4a28' },
+            { y: CONFIG.DEPTHS.LEVEL_2, label: 'Tầng 2', color: '#4a2810' },
+            { y: CONFIG.DEPTHS.LEVEL_3, label: 'Tầng 3', color: '#2a1008' },
+        ];
+        depthLines.forEach(dl => {
+            const mm = toMM(worldXMin, dl.y);
+            ctx.beginPath();
+            ctx.moveTo(0, mm.y);
+            ctx.lineTo(W, mm.y);
+            ctx.strokeStyle = dl.color;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = dl.color;
+            ctx.font = '7px monospace';
+            ctx.fillText(dl.label, 2, mm.y - 2);
+        });
+        
+        // Draw tunnels
         if (typeof ROUTES !== 'undefined' && typeof LOCATIONS !== 'undefined') {
+            ctx.lineWidth = 1.5;
             for (const route of ROUTES) {
                 const sn = LOCATIONS.find(l => l.id === route.startId);
                 const en = LOCATIONS.find(l => l.id === route.endId);
                 if (sn && en) {
-                    ctx.moveTo(sn.x * scaleX + offsetX, sn.y * scaleY + offsetY);
-                    ctx.lineTo(en.x * scaleX + offsetX, en.y * scaleY + offsetY);
+                    const p1 = toMM(sn.x, sn.y);
+                    const p2 = toMM(en.x, en.y);
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.strokeStyle = route.type.includes('shaft') ? 'rgba(180,120,60,0.7)' : 'rgba(120,90,50,0.5)';
+                    ctx.stroke();
                 }
             }
         }
-        ctx.strokeStyle = 'rgba(100, 80, 50, 0.6)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
         
         // Draw nodes
         if (typeof LOCATIONS !== 'undefined') {
             for (const node of LOCATIONS) {
+                const mm = toMM(node.x, node.y);
                 ctx.beginPath();
-                ctx.arc(node.x * scaleX + offsetX, node.y * scaleY + offsetY, 2, 0, Math.PI * 2);
-                ctx.fillStyle = node.type === 'trap' ? '#ff6b6b' : (node.type === 'entrance' ? '#7ecf7e' : '#ffd60a');
+                const r = node.type === 'entrance' ? 3 : 2.5;
+                ctx.arc(mm.x, mm.y, r, 0, Math.PI * 2);
+                let color;
+                if (node.type === 'trap') color = '#ff4444';
+                else if (node.type === 'entrance') color = '#55cc55';
+                else if (node.type === 'surface') color = '#88dd88';
+                else color = '#ffd60a';
+                ctx.fillStyle = color;
                 ctx.fill();
             }
         }
         
-        // Draw camera viewport box
-        const camW = CONFIG.CANVAS_WIDTH / CONFIG.CAMERA.zoom;
-        const camH = CONFIG.CANVAS_HEIGHT / CONFIG.CAMERA.zoom;
-        const camX = (CONFIG.CAMERA.x - camW/2) * scaleX + offsetX;
-        const camY = (CONFIG.CAMERA.y - camH/2) * scaleY + offsetY;
+        // Draw active entities as blinking dots
+        const activeEntities = (typeof EntityPoolInstance !== 'undefined') ? EntityPoolInstance.pool.active : [];
+        const blink = (Date.now() % 800) > 400;
+        if (blink) {
+            for (const ent of activeEntities) {
+                if (!ent.active) continue;
+                const wx = ent.start.x + (ent.end.x - ent.start.x) * ent.progress;
+                const wy = ent.start.y + (ent.end.y - ent.start.y) * ent.progress;
+                const mm = toMM(wx, wy);
+                ctx.beginPath();
+                ctx.arc(mm.x, mm.y, 2, 0, Math.PI * 2);
+                ctx.fillStyle = ent.type === 'enemy' ? '#ff4444' : '#44aaff';
+                ctx.fill();
+            }
+        }
         
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        // Draw camera viewport box — convert screen bounds to world then to minimap
+        const camCenterWX = -CONFIG.CAMERA.x;
+        const camCenterWY = -CONFIG.CAMERA.y;
+        const camHalfWX = (CONFIG.CANVAS_WIDTH / 2) / CONFIG.CAMERA.zoom / CONFIG.SCALE;
+        const camHalfWY = (CONFIG.CANVAS_HEIGHT / 2) / CONFIG.CAMERA.zoom / CONFIG.SCALE;
+        
+        const camTL = toMM(camCenterWX - camHalfWX, camCenterWY + camHalfWY);
+        const camBR = toMM(camCenterWX + camHalfWX, camCenterWY - camHalfWY);
+        
+        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
         ctx.lineWidth = 1;
-        ctx.strokeRect(camX, camY, camW * scaleX, camH * scaleY);
+        ctx.setLineDash([3,2]);
+        ctx.strokeRect(camTL.x, camTL.y, camBR.x - camTL.x, camBR.y - camTL.y);
+        ctx.setLineDash([]);
     }
 }
 
