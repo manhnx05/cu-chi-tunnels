@@ -295,6 +295,7 @@ class EntityPool {
                 const y = entity.start.y + (entity.end.y - entity.start.y) * p;
                 const z = entity.start.z + (entity.end.z - entity.start.z) * p;
                 const screenPos = projectionFn(x, y, z);
+                screenPos.y += 18 * zoom; // Offset to walk on the tunnel floor
                 canvasCtx.lineTo(screenPos.x, screenPos.y);
                 
                 canvasCtx.strokeStyle = color.replace('0.9', '0.3');
@@ -306,6 +307,7 @@ class EntityPool {
                 var y = entity.start.y + (entity.end.y - entity.start.y) * p;
                 var z = entity.start.z + (entity.end.z - entity.start.z) * p;
                 var screenPos = projectionFn(x, y, z);
+                screenPos.y += 18 * zoom; // Offset to walk on the tunnel floor
             }
             
             // Calculate direction angle

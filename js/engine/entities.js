@@ -101,6 +101,7 @@ class EntityManager {
                 const y = ent.start.y + (ent.end.y - ent.start.y) * p;
                 const z = ent.start.z + (ent.end.z - ent.start.z) * p;
                 const screenPos = Projection.project(x, y, z);
+                screenPos.y += 18 * CONFIG.CAMERA.zoom; // Offset to walk on the tunnel floor
                 Canvas.ctx.lineTo(screenPos.x, screenPos.y);
                 
                 Canvas.ctx.strokeStyle = color.replace('0.8', '0.3'); // Make trail transparent
@@ -113,6 +114,7 @@ class EntityManager {
                 var y = ent.start.y + (ent.end.y - ent.start.y) * p;
                 var z = ent.start.z + (ent.end.z - ent.start.z) * p;
                 var screenPos = Projection.project(x, y, z);
+                screenPos.y += 18 * CONFIG.CAMERA.zoom; // Offset to walk on the tunnel floor
             }
             
             // Calculate direction angle on screen
