@@ -37,6 +37,7 @@ class TerrainEngine {
                 colorBot: "#0a0504",
                 label: "10m — Tầng 3",
                 labelY: CONFIG.DEPTHS.LEVEL_3
+            }
         ];
         
         // Procedural Textures
