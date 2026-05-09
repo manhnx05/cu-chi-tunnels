@@ -1,8 +1,8 @@
 class TerrainEngine {
     constructor() {
         // Thickness ratios per tunnel type (in world-units) - MASSIVELY INCREASED for easy visualization
-        this.TUNNEL_OUTER = 60; // DOUBLED from 35 - Much thicker walls for visibility
-        this.TUNNEL_INNER = 45; // DOUBLED from 22 - Much wider tunnels for clarity
+        this.TUNNEL_OUTER = 100; // Increased for thicker walls
+        this.TUNNEL_INNER = 80; // Increased for wider tunnels
 
         // Earth layer bands
         this.layers = [
@@ -818,7 +818,7 @@ class TerrainEngine {
     }
 
     _drawRoom(center, zoom, node) {
-        const rx = 50 * zoom, ry = 32 * zoom; // INCREASED from 36x22 - Much larger rooms (+40%)
+        const rx = 150 * zoom, ry = 96 * zoom; // INCREASED x3 from 50x32
         
         // LAYER 1: Deep shadow for 3D depth
         Canvas.ctx.beginPath();
