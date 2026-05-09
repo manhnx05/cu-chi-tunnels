@@ -483,14 +483,12 @@ class App {
             Entities.update(scaledDt);
         }
         
-        // Update warfare systems (NEW - v3.0, only in phases 2 and 3)
-        if (this.currentPhase === 2 || this.currentPhase === 3) {
-            if (typeof TankSystemInstance !== 'undefined') {
-                TankSystemInstance.update(scaledDt);
-            }
-            if (typeof AircraftSystemInstance !== 'undefined') {
-                AircraftSystemInstance.update(scaledDt);
-            }
+        // Update warfare systems (always active for visual flavor)
+        if (typeof TankSystemInstance !== 'undefined') {
+            TankSystemInstance.update(scaledDt);
+        }
+        if (typeof AircraftSystemInstance !== 'undefined') {
+            AircraftSystemInstance.update(scaledDt);
         }
         
         // Update simulation logic (O2, Temp, Smoke)
@@ -522,14 +520,12 @@ class App {
         
         Renderer.render(dt);
         
-        // Render warfare systems on top (NEW - v3.0, only in phases 2 and 3)
-        if (this.currentPhase === 2 || this.currentPhase === 3) {
-            if (typeof TankSystemInstance !== 'undefined') {
-                TankSystemInstance.render();
-            }
-            if (typeof AircraftSystemInstance !== 'undefined') {
-                AircraftSystemInstance.render();
-            }
+        // Render warfare systems on top
+        if (typeof TankSystemInstance !== 'undefined') {
+            TankSystemInstance.render();
+        }
+        if (typeof AircraftSystemInstance !== 'undefined') {
+            AircraftSystemInstance.render();
         }
     }
 
