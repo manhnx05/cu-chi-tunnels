@@ -175,115 +175,67 @@ class App {
         }
 
         // Trigger Phase specific visual/audio effects
-        if (phase === 2) {
-            AudioSys.playBombRumble();
-            this.focusOnNode('ham_chong'); 
-            
-            // Spawn Tunnel Rats using pool
-            const startNode = LOCATIONS.find(l => l.id === 'lo_thong_hoi');
-            const endNode = LOCATIONS.find(l => l.id === 'ham_chong');
-            if (startNode && endNode) {
+        switch(phase) {
+            case 0: // Tổng quan
+                CONFIG.CAMERA.targetZoom = 0.5;
+                CONFIG.CAMERA.targetX = 0;
+                CONFIG.CAMERA.targetY = -CONFIG.DEPTHS.LEVEL_1;
+                break;
+            case 1: // Lối vào bí mật
+                this.focusOnNode('lo_xuong_1');
+                CONFIG.CAMERA.targetZoom = 1.8;
+                AudioSys.playNatureAmbient();
+                break;
+            case 2: // Hệ thống hầm
+                this.focusOnNode('ham_chi_huy');
+                CONFIG.CAMERA.targetZoom = 1.2;
                 if (typeof EntityPoolInstance !== 'undefined') {
-                    EntityPoolInstance.spawn('enemy', startNode, endNode, 3000);
-                } else if (typeof Entities !== 'undefined') {
-                    Entities.spawn('enemy', 'lo_thong_hoi', 'ham_chong', 3000);
-                }
-            }
-            
-            // Spawn guerillas
-            const cmdNode = LOCATIONS.find(l => l.id === 'ham_chi_huy');
-            if (cmdNode && endNode) {
-                if (typeof EntityPoolInstance !== 'undefined') {
-                    EntityPoolInstance.spawn('vc', cmdNode, endNode, 2000);
-                } else if (typeof Entities !== 'undefined') {
-                    Entities.spawn('vc', 'ham_chi_huy', 'ham_chong', 2000);
-                }
-            }
-        } else if (phase === 3) {
-            AudioSys.playHelicopter();
-            AudioSys.playGunfire();
-            
-            // Surface attack - Multiple VC units emerging
-            const paths = [
-                { from: 'ngach_song', to: 'lo_thong_hoi', delay: 0 },
-                { from: 'ham_chi_huy', to: 'lo_thong_hoi', delay: 500 },
-                { from: 'bep_hoang_cam', to: 'lo_thong_hoi', delay: 1000 }
-            ];
-            
-            paths.forEach(path => {
-                setTimeout(() => {
-                    const startNode = LOCATIONS.find(l => l.id === path.from);
-                    const endNode = LOCATIONS.find(l => l.id === path.to);
-                    if (startNode && endNode) {
-                        if (typeof EntityPoolInstance !== 'undefined') {
-                            EntityPoolInstance.spawn('vc', startNode, endNode, 4000);
-                        } else if (typeof Entities !== 'undefined') {
-                            Entities.spawn('vc', path.from, path.to, 4000);
-                        }
-                    }
-                }, path.delay);
-            });
-            
-            // Continuous gunfire
-            setTimeout(() => AudioSys.playGunfire((Math.random() - 0.5) * 400, 0), 1500);
-            setTimeout(() => AudioSys.playGunfire((Math.random() - 0.5) * 400, 0), 3200);
-        } else if (phase === 4) {
-            AudioSys.playNatureAmbient();
-            
-            // Tourists walking around
-            const touristPaths = [
-                { from: 'lo_thong_hoi', to: 'ham_chi_huy', delay: 0 },
-                { from: 'ham_chi_huy', to: 'bep_hoang_cam', delay: 2000 }
-            ];
-            
-            touristPaths.forEach(path => {
-                setTimeout(() => {
-                    const startNode = LOCATIONS.find(l => l.id === path.from);
-                    const endNode = LOCATIONS.find(l => l.id === path.to);
-                    if (startNode && endNode) {
-                        if (typeof EntityPoolInstance !== 'undefined') {
-                            EntityPoolInstance.spawn('tourist', startNode, endNode, 5000);
-                        } else if (typeof Entities !== 'undefined') {
-                            Entities.spawn('tourist', path.from, path.to, 5000);
-                        }
-                    }
-                }, path.delay);
-            });
-            
-            // Bird chirping
-            this.phaseIntervals.push(setInterval(() => {
-                if (this.currentPhase === 4 && Math.random() > 0.5) {
-                    AudioSys.playNatureAmbient();
-                }
-            }, 4000));
-        } else if (phase === 5) {
-            AudioSys.playDiggingSound(0, 150);
-            
-            // Diggers
-            const startNode = LOCATIONS.find(l => l.id === 'lo_thong_hoi');
-            const endNode = LOCATIONS.find(l => l.id === 'bep_hoang_cam');
-            if (startNode && endNode) {
-                if (typeof EntityPoolInstance !== 'undefined') {
-                    EntityPoolInstance.spawn('digger', startNode, endNode, 3000);
-                } else if (typeof Entities !== 'undefined') {
-                    Entities.spawn('digger', 'lo_thong_hoi', 'bep_hoang_cam', 3000);
-                }
-            }
-            
-            this.phaseIntervals.push(setInterval(() => {
-                if (this.currentPhase === 5) {
-                    AudioSys.playDiggingSound((Math.random() - 0.5) * 300, 150);
                     const s = LOCATIONS.find(l => l.id === 'lo_thong_hoi');
                     const e = LOCATIONS.find(l => l.id === 'bep_hoang_cam');
-                    if (s && e && Math.random() > 0.5) {
-                        if (typeof EntityPoolInstance !== 'undefined') {
-                            EntityPoolInstance.spawn('digger', s, e, 3000);
-                        } else if (typeof Entities !== 'undefined') {
-                            Entities.spawn('digger', 'lo_thong_hoi', 'bep_hoang_cam', 3000);
-                        }
-                    }
+                    if (s && e) EntityPoolInstance.spawn('vc', s, e, 3000);
                 }
-            }, 2000));
+                break;
+            case 3: // Bếp Hoàng Cầm
+                this.focusOnNode('bep_hoang_cam');
+                CONFIG.CAMERA.targetZoom = 2.0;
+                break;
+            case 4: // Phòng họp
+                this.focusOnNode('phong_hop');
+                CONFIG.CAMERA.targetZoom = 1.8;
+                break;
+            case 5: // Bệnh xá
+                this.focusOnNode('benh_xa');
+                CONFIG.CAMERA.targetZoom = 1.8;
+                break;
+            case 6: // Xưởng vũ khí
+                this.focusOnNode('xuong_vu_khi');
+                CONFIG.CAMERA.targetZoom = 1.8;
+                break;
+            case 7: // Bẫy
+                this.focusOnNode('ham_chong');
+                CONFIG.CAMERA.targetZoom = 1.5;
+                break;
+            case 8: // Thông khí
+                this.focusOnNode('lo_thong_hoi');
+                CONFIG.CAMERA.targetZoom = 1.8;
+                break;
+            case 9: // Ngách ra sông
+                this.focusOnNode('ngach_song');
+                CONFIG.CAMERA.targetZoom = 1.5;
+                break;
+            case 10: // So sánh chiến trường
+                CONFIG.CAMERA.targetZoom = 0.6;
+                CONFIG.CAMERA.targetX = 0;
+                CONFIG.CAMERA.targetY = -CONFIG.DEPTHS.SURFACE;
+                AudioSys.playBombRumble();
+                break;
+            case 11: // Tình hình mặt đất
+                CONFIG.CAMERA.targetZoom = 1.5;
+                CONFIG.CAMERA.targetX = 0;
+                CONFIG.CAMERA.targetY = -CONFIG.DEPTHS.SURFACE + 100;
+                AudioSys.playHelicopter();
+                AudioSys.playGunfire();
+                break;
         }
     }
 
@@ -483,12 +435,15 @@ class App {
             Entities.update(scaledDt);
         }
         
-        // Update warfare systems (always active for visual flavor)
+        const phase = this.currentPhase;
+        
+        // Update warfare systems (active in Overview and War phases)
+        const isWarfareActive = (phase === 0 || phase === 10 || phase === 11);
         if (typeof TankSystemInstance !== 'undefined') {
-            TankSystemInstance.update(scaledDt);
+            if (isWarfareActive) TankSystemInstance.update(scaledDt);
         }
         if (typeof AircraftSystemInstance !== 'undefined') {
-            AircraftSystemInstance.update(scaledDt);
+            if (isWarfareActive) AircraftSystemInstance.update(scaledDt);
         }
         
         // Update simulation logic (O2, Temp, Smoke)
@@ -521,10 +476,13 @@ class App {
         Renderer.render(dt);
         
         // Render warfare systems on top
-        if (typeof TankSystemInstance !== 'undefined') {
+        const phase = this.currentPhase;
+        const isWarfareActive = (phase === 0 || phase === 10 || phase === 11);
+        
+        if (typeof TankSystemInstance !== 'undefined' && isWarfareActive) {
             TankSystemInstance.render();
         }
-        if (typeof AircraftSystemInstance !== 'undefined') {
+        if (typeof AircraftSystemInstance !== 'undefined' && isWarfareActive) {
             AircraftSystemInstance.render();
         }
     }
