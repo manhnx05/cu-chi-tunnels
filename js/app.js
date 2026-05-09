@@ -113,21 +113,11 @@ class App {
         this.currentPhase = phase;
         console.log(`Switched to Phase ${phase}`);
         this.updateNarration(phase);
-        
         this.clearPhaseIntervals();
-        
-        // --- Cinematic Camera Sweep ---
-        if (typeof CONFIG !== 'undefined' && CONFIG.CAMERA_VIEWS && CONFIG.CAMERA_VIEWS[phase]) {
-            const view = CONFIG.CAMERA_VIEWS[phase];
-            CONFIG.CAMERA.targetX = view.x;
-            CONFIG.CAMERA.targetY = view.y;
-            CONFIG.CAMERA.targetZoom = view.zoom;
-            // Activate sweeping state for slower easing
-            this.isSweeping = true;
-            setTimeout(() => this.isSweeping = false, 3000); // 3 seconds sweep
-        }
-        
-        // --- Phase Transition Flash Overlay ---
+        // Activate sweeping state for cinematic camera
+        this.isSweeping = true;
+        setTimeout(() => this.isSweeping = false, 3000);
+        // --- Phase Transition Flash Overlay + Camera + Effects ---
         this.showPhaseTransition(phase);
     }
     
@@ -180,67 +170,70 @@ class App {
             setTimeout(() => Narrator.speak(NARRATIONS[phase].text), 400);
         }
 
-        // Trigger Phase specific visual/audio effects
+        // Trigger Phase specific visual/audio effects + camera target
         switch(phase) {
-            case 0: // Tổng quan
-                CONFIG.CAMERA.targetZoom = 0.5;
+            case 0: // Tổng quan — zoom out full
+                CONFIG.CAMERA.targetZoom = 0.55;
                 CONFIG.CAMERA.targetX = 0;
-                CONFIG.CAMERA.targetY = -CONFIG.DEPTHS.LEVEL_1;
+                CONFIG.CAMERA.targetY = 80;
                 break;
-            case 1: // Lối vào bí mật
+            case 1: // Lối vào bí mật — surface entrance
                 this.focusOnNode('lo_xuong_1');
-                CONFIG.CAMERA.targetZoom = 1.8;
-                AudioSys.playNatureAmbient();
+                CONFIG.CAMERA.targetZoom = 1.9;
+                if (typeof AudioSys !== 'undefined') AudioSys.playNatureAmbient();
                 break;
-            case 2: // Hệ thống hầm
-                this.focusOnNode('ham_chi_huy');
-                CONFIG.CAMERA.targetZoom = 1.2;
+            case 2: // Hệ thống hầm — mid zoom showing all tunnels
+                CONFIG.CAMERA.targetZoom = 0.85;
+                CONFIG.CAMERA.targetX = 0;
+                CONFIG.CAMERA.targetY = 280;
                 if (typeof EntityPoolInstance !== 'undefined') {
-                    const s = LOCATIONS.find(l => l.id === 'lo_thong_hoi');
-                    const e = LOCATIONS.find(l => l.id === 'bep_hoang_cam');
-                    if (s && e) EntityPoolInstance.spawn('vc', s, e, 3000);
+                    const s = LOCATIONS.find(l => l.id === 'lo_xuong_1');
+                    const e = LOCATIONS.find(l => l.id === 'ham_chi_huy');
+                    if (s && e) EntityPoolInstance.spawn('vc', s, e, 4000);
                 }
                 break;
-            case 3: // Bếp Hoàng Cầm
+            case 3: // Bếp Hoàng Cầm — Level 1
                 this.focusOnNode('bep_hoang_cam');
-                CONFIG.CAMERA.targetZoom = 2.0;
+                CONFIG.CAMERA.targetZoom = 2.2;
                 break;
-            case 4: // Phòng họp
+            case 4: // Phòng họp — Level 1
                 this.focusOnNode('phong_hop');
-                CONFIG.CAMERA.targetZoom = 1.8;
+                CONFIG.CAMERA.targetZoom = 2.2;
                 break;
-            case 5: // Bệnh xá
+            case 5: // Bệnh xá — Level 2
                 this.focusOnNode('benh_xa');
-                CONFIG.CAMERA.targetZoom = 1.8;
+                CONFIG.CAMERA.targetZoom = 2.2;
                 break;
-            case 6: // Xưởng vũ khí
+            case 6: // Xưởng vũ khí — Level 1
                 this.focusOnNode('xuong_vu_khi');
-                CONFIG.CAMERA.targetZoom = 1.8;
+                CONFIG.CAMERA.targetZoom = 2.2;
                 break;
-            case 7: // Bẫy
+            case 7: // Hầm bẫy chông
                 this.focusOnNode('ham_chong');
-                CONFIG.CAMERA.targetZoom = 1.5;
+                CONFIG.CAMERA.targetZoom = 2.2;
                 break;
-            case 8: // Thông khí
+            case 8: // Thông khí — surface vent
                 this.focusOnNode('lo_thong_hoi');
+                CONFIG.CAMERA.targetZoom = 2.2;
+                break;
+            case 9: // Ngách ra sông — Level 3
+                this.focusOnNode('ngach_song');
                 CONFIG.CAMERA.targetZoom = 1.8;
                 break;
-            case 9: // Ngách ra sông
-                this.focusOnNode('ngach_song');
-                CONFIG.CAMERA.targetZoom = 1.5;
-                break;
-            case 10: // So sánh chiến trường
-                CONFIG.CAMERA.targetZoom = 0.6;
+            case 10: // So sánh chiến trường — zoom out
+                CONFIG.CAMERA.targetZoom = 0.55;
                 CONFIG.CAMERA.targetX = 0;
-                CONFIG.CAMERA.targetY = -CONFIG.DEPTHS.SURFACE;
-                AudioSys.playBombRumble();
+                CONFIG.CAMERA.targetY = 80;
+                if (typeof AudioSys !== 'undefined') AudioSys.playBombRumble();
                 break;
-            case 11: // Tình hình mặt đất
-                CONFIG.CAMERA.targetZoom = 1.5;
+            case 11: // Tình hình mặt đất — focus surface
+                CONFIG.CAMERA.targetZoom = 1.6;
                 CONFIG.CAMERA.targetX = 0;
-                CONFIG.CAMERA.targetY = -CONFIG.DEPTHS.SURFACE + 100;
-                AudioSys.playHelicopter();
-                AudioSys.playGunfire();
+                CONFIG.CAMERA.targetY = -100;
+                if (typeof AudioSys !== 'undefined') {
+                    AudioSys.playHelicopter();
+                    setTimeout(() => AudioSys.playGunfire(), 800);
+                }
                 break;
         }
     }
@@ -339,10 +332,24 @@ class App {
     focusOnNode(nodeId) {
         const node = LOCATIONS.find(l => l.id === nodeId);
         if (node) {
-            // Screen center is 0,0 in offset terms
-            // To focus, we need to shift the target so the node is near center
+            // World coord: x is horizontal, y is depth (0=surface, -300=Level1, -600=Level2, -1000=Level3)
+            // Camera.x shifts screen center horizontally: targetX = -node.x centers the node
+            // Camera.y shifts screen center vertically: screenY = cy + camera.y + (-node.y * scale * zoom)
+            // To center node: camera.y should make cy + camera.y + (-node.y * scale * zoom) = CANVAS_HEIGHT/2
+            // Simplified: targetY = -node.y * scale * (targetZoom or current zoom)
+            // Use a pre-set zoom of 2.0 for the calculation
+            const scale = CONFIG.SCALE;
             CONFIG.CAMERA.targetX = -node.x;
-            CONFIG.CAMERA.targetY = -node.y; 
+            // node.y is negative for underground. -node.y is positive.
+            // We want the node to appear near vertical center. 
+            // Surface is rendered at cy = CANVAS_HEIGHT/4 when camera.y=0
+            // For underground node at y=-300: screenY = cy + camera.y + 300*scale*zoom
+            // Center at CANVAS_HEIGHT/2 means: cy + camera.y + (-node.y)*scale*zoom = CANVAS_HEIGHT/2
+            // => camera.y = CANVAS_HEIGHT/2 - cy - (-node.y)*scale*zoom
+            // But zoom changes dynamically so use approximation:
+            const approxZoom = 2.0;
+            const cy = CONFIG.CANVAS_HEIGHT / 4;
+            CONFIG.CAMERA.targetY = (CONFIG.CANVAS_HEIGHT / 2 - cy) + (-node.y) * scale * approxZoom - CONFIG.CANVAS_HEIGHT * 0.15;
         }
     }
 
@@ -354,9 +361,9 @@ class App {
         const timeScale = (typeof State !== 'undefined') ? State.get('simulation.timeScale') : 1.0;
         const scaledDt = dt * timeScale;
         
-        // Camera Lerp (Cinematic Sweep vs Normal Pan)
-        const baseLerp = this.isSweeping ? 0.05 : 0.001;
-        const lerpSpeed = 1.0 - Math.pow(baseLerp, scaledDt / 1000); 
+        // Camera Lerp — fast sweep when changing phase, slow drift otherwise
+        const baseLerp = this.isSweeping ? 0.018 : 0.001;
+        const lerpSpeed = 1.0 - Math.pow(baseLerp, scaledDt / 1000);
         
         CONFIG.CAMERA.x += (CONFIG.CAMERA.targetX - CONFIG.CAMERA.x) * lerpSpeed;
         CONFIG.CAMERA.y += (CONFIG.CAMERA.targetY - CONFIG.CAMERA.y) * lerpSpeed;
