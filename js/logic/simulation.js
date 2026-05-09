@@ -20,26 +20,31 @@ class SimulationEngine {
         for (const loc of LOCATIONS) {
             if (loc.type === 'entrance' || loc.type === 'surface' || loc.type === 'trap') continue;
             
+            // Realistic O2 and temperature by depth
+            // Surface normal: O2=20.9%, Temp=28C
+            // Level 1 (~3m): O2~20%, Temp~30C
+            // Level 2 (~6m): O2~19%, Temp~31C  
+            // Level 3 (~10m): O2~17.5%, Temp~33C (can drop to 16% with people)
             this.roomStates[loc.id] = {
-                oxygen: 100, // percentage
-                temperature: 28, // Celsius
-                smoke: 0, // 0 to 1
-                baseO2: 100,
+                oxygen: 20.9,
+                temperature: 28,
+                smoke: 0,
+                baseO2: 20.9,
                 baseTemp: 28
             };
             
-            // Adjust base properties by depth
-            if (loc.y > CONFIG.DEPTHS.LEVEL_1) {
-                this.roomStates[loc.id].baseTemp = 28;
-                this.roomStates[loc.id].baseO2 = 90;
-            }
-            if (loc.y > CONFIG.DEPTHS.LEVEL_2) {
+            // Adjust base properties by depth (depths are NEGATIVE values)
+            if (loc.y <= CONFIG.DEPTHS.LEVEL_1) {
                 this.roomStates[loc.id].baseTemp = 30;
-                this.roomStates[loc.id].baseO2 = 80;
+                this.roomStates[loc.id].baseO2 = 20.0;
             }
-            if (loc.y > CONFIG.DEPTHS.LEVEL_3) {
-                this.roomStates[loc.id].baseTemp = 32;
-                this.roomStates[loc.id].baseO2 = 70;
+            if (loc.y <= CONFIG.DEPTHS.LEVEL_2) {
+                this.roomStates[loc.id].baseTemp = 31;
+                this.roomStates[loc.id].baseO2 = 19.0;
+            }
+            if (loc.y <= CONFIG.DEPTHS.LEVEL_3) {
+                this.roomStates[loc.id].baseTemp = 33;
+                this.roomStates[loc.id].baseO2 = 17.5;
             }
             
             // Reset to base
@@ -85,13 +90,13 @@ class SimulationEngine {
             const state = this.roomStates[locId];
             const occupancy = roomOccupancy[locId];
             
-            // Oxygen consumption
+            // Oxygen consumption (realistic: each person uses ~0.05% O2 per second in confined space)
             if (occupancy > 0) {
-                state.oxygen -= occupancy * 0.5; // Each entity uses 0.5% O2 per second
+                state.oxygen -= occupancy * 0.05;
             } else {
-                // Recover O2 slowly back to base level
+                // Recover O2 slowly back to base level (ventilation)
                 if (state.oxygen < state.baseO2) {
-                    state.oxygen += 0.2;
+                    state.oxygen += 0.02;
                 }
             }
             
@@ -110,14 +115,14 @@ class SimulationEngine {
                 // If phase 1 or 2, cooking happens
                 const phase = (typeof State !== 'undefined') ? State.get('currentPhase') : 0;
                 if (phase === 1 || phase === 2) {
-                    state.smoke += 0.1;
-                    state.temperature += 0.5;
-                    state.oxygen -= 1.0;
+                    state.smoke += 0.05;
+                    state.temperature += 0.3;
+                    state.oxygen -= 0.15; // Combustion consumes extra O2
                 }
             }
             
-            // Clamp values
-            state.oxygen = Math.max(0, Math.min(100, state.oxygen));
+            // Clamp values to realistic ranges
+            state.oxygen = Math.max(10, Math.min(21, state.oxygen));
             state.temperature = Math.max(state.baseTemp, Math.min(50, state.temperature));
             state.smoke = Math.max(0, Math.min(1, state.smoke));
             
