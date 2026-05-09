@@ -114,6 +114,8 @@ class App {
         console.log(`Switched to Phase ${phase}`);
         this.updateNarration(phase);
         this.clearPhaseIntervals();
+        // Always resume when a phase is selected (in case simulation was paused)
+        if (this.isPaused) this.resume();
         // Activate sweeping state for cinematic camera
         this.isSweeping = true;
         setTimeout(() => this.isSweeping = false, 3000);
@@ -358,22 +360,20 @@ class App {
     }
 
     update(dt) {
-        // Skip update if paused
+        // Camera Lerp always runs — even when paused — so buttons feel responsive
+        const camDt = dt || 16;
+        const baseLerp = this.isSweeping ? 0.005 : 0.25;
+        const lerpSpeed = 1.0 - Math.pow(baseLerp, camDt / 1000);
+        CONFIG.CAMERA.x += (CONFIG.CAMERA.targetX - CONFIG.CAMERA.x) * lerpSpeed;
+        CONFIG.CAMERA.y += (CONFIG.CAMERA.targetY - CONFIG.CAMERA.y) * lerpSpeed;
+        CONFIG.CAMERA.zoom += (CONFIG.CAMERA.targetZoom - CONFIG.CAMERA.zoom) * lerpSpeed;
+
+        // Skip simulation logic if paused
         if (this.isPaused) return;
         
         // Apply time scale
         const timeScale = (typeof State !== 'undefined') ? State.get('simulation.timeScale') : 1.0;
         const scaledDt = dt * timeScale;
-        
-        // Camera Lerp — fast sweep when changing phase
-        // baseLerp is the fraction remaining per second; lower = faster
-        // At 60fps (dt≈16ms): lerpSpeed = 1 - pow(0.005, 16/1000) ≈ 0.079 per frame → ~25 frames to 85% done
-        const baseLerp = this.isSweeping ? 0.005 : 0.25;
-        const lerpSpeed = 1.0 - Math.pow(baseLerp, scaledDt / 1000);
-        
-        CONFIG.CAMERA.x += (CONFIG.CAMERA.targetX - CONFIG.CAMERA.x) * lerpSpeed;
-        CONFIG.CAMERA.y += (CONFIG.CAMERA.targetY - CONFIG.CAMERA.y) * lerpSpeed;
-        CONFIG.CAMERA.zoom += (CONFIG.CAMERA.targetZoom - CONFIG.CAMERA.zoom) * lerpSpeed;
 
         // Continuous effects based on phase
         if (this.currentPhase === 1 || this.currentPhase === 2) {
