@@ -140,12 +140,18 @@ class App {
     
     showPhaseTransition(phase) {
         const PHASE_LABELS = [
-            { title: 'TOÀN CẢNH', sub: 'Hệ thống Địa đạo 250km' },
-            { title: 'SINH HOẠT', sub: 'Cuộc sống dưới lòng đất 1965–1972' },
-            { title: 'CHỐNG CÀN', sub: 'Chiến dịch Cedar Falls · Tháng 1/1967' },
-            { title: 'XUẤT KÍCH', sub: 'Tấn công phản kích từ lòng đất' },
-            { title: 'DI TÍCH', sub: 'Địa đạo ngày nay · Di sản lịch sử' },
-            { title: 'KIẾN THIẾT', sub: 'Đào và xây dựng hệ thống' },
+            { title: 'TỔNG QUAN', sub: 'Kiến trúc địa đạo 250km · 3 tầng ngầm' },
+            { title: 'LỐI VÀO BÍ MẬT', sub: 'Miệng hầm 30×45cm · Ngụy trang hoàn hảo' },
+            { title: 'HỆ THỐNG HẦM', sub: 'Mạng lưới 250km · Chống bom B-52' },
+            { title: 'BẾP HOÀNG CẦM', sub: 'Phát minh 1960 · Khói qua rãnh ngầm 8–10m' },
+            { title: 'PHÒNG HỌP', sub: 'Sinh hoạt · Họp tác chiến · 15 người' },
+            { title: 'BỆNH XÁ', sub: 'Phẫu thuật không thuốc mê · 70-80% cứu sống' },
+            { title: 'XƯỞNG VŨ KHÍ', sub: 'Tái chế bom mìn địch · Rèn vũ khí thô sơ' },
+            { title: 'HỆ THỐNG BẪY', sub: 'Chông tre tẩm độc · Bẫy lò xo · Hố chông' },
+            { title: 'HỆ THỐNG THÔNG KHÍ', sub: 'Lỗ Ø10-15cm · Gò mối ngụy trang' },
+            { title: 'THOÁT HIỂM RA SÔNG', sub: 'Lặn ngầm 5-10m · Sông Sài Gòn bí mật' },
+            { title: 'SO SÁNH CHIẾN TRƯỜNG', sub: 'Trên: Bom đạn · Dưới: Kiên cường sống động' },
+            { title: 'TÌNH HÌNH MẶT ĐẤT', sub: 'Cedar Falls · B-52 · M113 càn quét' },
         ];
         
         const overlay = document.getElementById('phase-transition-overlay');
