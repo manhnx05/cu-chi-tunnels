@@ -513,6 +513,15 @@ class TerrainEngine {
             // Label
             Canvas.ctx.fillStyle = "rgba(255,255,255,0.45)";
             Canvas.ctx.fillText(layer.label, 8, sp.y - 5);
+            
+            // Depth indicator right
+            const metersMatch = layer.label.match(/^(\d+m)/);
+            if (metersMatch) {
+                Canvas.ctx.textAlign = "right";
+                Canvas.ctx.fillStyle = "rgba(255, 214, 10, 0.4)";
+                Canvas.ctx.fillText(`▾ Độ sâu ${metersMatch[1]}`, CONFIG.CANVAS_WIDTH - 8, sp.y + 14);
+                Canvas.ctx.textAlign = "left";
+            }
         }
         Canvas.ctx.restore();
     }
@@ -774,6 +783,23 @@ class TerrainEngine {
                 Canvas.ctx.shadowOffsetY = 3;
                 Canvas.ctx.fillStyle = this._labelColor(node.type);
                 Canvas.ctx.fillText(node.name, center.x, center.y + 35 * zoom); // Adjusted offset
+                
+                // Add dimensions label if it's a room
+                if (['command', 'hospital', 'kitchen', 'storage', 'room', 'printing', 'art', 'medical'].includes(node.type)) {
+                    let dim = '';
+                    if (typeof RoomDetailInstance !== 'undefined' && RoomDetailInstance.roomInteriors[node.id]) {
+                        const r = RoomDetailInstance.roomInteriors[node.id].size;
+                        dim = `${r.width}x${r.depth}x${r.height}m`;
+                    } else if (node.dimensions) {
+                        dim = `${node.dimensions.width}x${node.dimensions.depth}x${node.dimensions.height}m`;
+                    }
+                    if (dim) {
+                        Canvas.ctx.font = `600 ${labelSize * 0.75}px Inter, sans-serif`;
+                        Canvas.ctx.fillStyle = 'rgba(200, 200, 200, 0.8)';
+                        Canvas.ctx.fillText(`[${dim}]`, center.x, center.y + 35 * zoom + labelSize + 2);
+                    }
+                }
+                
                 Canvas.ctx.shadowBlur = 0;
                 Canvas.ctx.shadowOffsetX = 0;
                 Canvas.ctx.shadowOffsetY = 0;

@@ -122,11 +122,9 @@ class RendererEngine {
         // 1. Light up infrastructure nodes (rooms)
         const LIT_TYPES = new Set(['infrastructure', 'room', 'medical', 'command', 'kitchen', 'storage', 'hospital', 'printing', 'art', 'water']);
         for (const node of LOCATIONS) {
-            // Underground rooms get a warm oil-lamp glow
-            // Surface entrances get a dim ambient glow
-            const isUnderground = node.y < CONFIG.DEPTHS.SURFACE - 10;
-            if (!LIT_TYPES.has(node.type) && isUnderground) continue;
-            if (!isUnderground) continue; // Surface nodes don't emit light underground
+            const isUnderground = node.y <= CONFIG.DEPTHS.SURFACE - 10;
+            if (isUnderground && !LIT_TYPES.has(node.type)) continue;
+            if (!isUnderground && node.type !== 'entrance' && node.type !== 'surface') continue;
             
             const screenPos = Projection.project(node.x, node.y, node.z);
             
@@ -135,15 +133,22 @@ class RendererEngine {
             const flicker = Math.sin(time + node.x) * 0.05 + Math.sin(time * 0.7 + node.y) * 0.05;
             
             // In realistic mode, lights are much smaller (oil lamps)
-            const baseRadius = isRealistic ? 55 : 140;
-            const flickerAmt = isRealistic ? 8 : 20;
+            const baseRadius = (!isUnderground) ? 200 : (isRealistic ? 55 : 140);
+            const flickerAmt = (!isUnderground) ? 5 : (isRealistic ? 8 : 20);
             const radius = (baseRadius + flicker * flickerAmt) * CONFIG.CAMERA.zoom;
             
-            // Warm amber gradient for oil lamp
             const grad = Canvas.ctx.createRadialGradient(screenPos.x, screenPos.y, 0, screenPos.x, screenPos.y, radius);
-            grad.addColorStop(0, `rgba(255, 230, 160, ${1.0 + flicker})`);
-            grad.addColorStop(0.3, `rgba(255, 180, 80, ${0.5 + flicker * 0.3})`);
-            grad.addColorStop(1, 'rgba(255, 140, 40, 0)');
+            if (!isUnderground) {
+                // Moonlight/ambient for surface
+                grad.addColorStop(0, `rgba(180, 200, 255, 0.5)`);
+                grad.addColorStop(0.5, `rgba(100, 150, 200, 0.2)`);
+                grad.addColorStop(1, 'rgba(50, 100, 150, 0)');
+            } else {
+                // Warm amber gradient for oil lamp
+                grad.addColorStop(0, `rgba(255, 230, 160, ${1.0 + flicker})`);
+                grad.addColorStop(0.3, `rgba(255, 180, 80, ${0.5 + flicker * 0.3})`);
+                grad.addColorStop(1, 'rgba(255, 140, 40, 0)');
+            }
             
             Canvas.ctx.beginPath();
             Canvas.ctx.arc(screenPos.x, screenPos.y, radius, 0, Math.PI * 2);
@@ -289,6 +294,17 @@ class RendererEngine {
                 else color = '#ffd60a';
                 ctx.fillStyle = color;
                 ctx.fill();
+                
+                // Draw name for important nodes
+                if (['command', 'hospital', 'kitchen', 'storage', 'room'].includes(node.type) && node.name) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.font = '8px Arial';
+                    ctx.textAlign = 'center';
+                    // Just print first or first two words
+                    const nameParts = node.name.split(' ');
+                    const shortName = nameParts.length > 1 ? nameParts[0] + ' ' + nameParts[1] : nameParts[0];
+                    ctx.fillText(shortName, mm.x, mm.y - 4);
+                }
             }
         }
         
