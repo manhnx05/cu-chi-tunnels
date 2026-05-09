@@ -1,9 +1,9 @@
 :root {
-    --bg-color: #0a0a0c;
-    --surface-color: #1c261e; /* Deep cinematic green */
-    --earth-1: #36261a; /* Tầng 1 */
-    --earth-2: #241612; /* Tầng 2 */
-    --earth-3: #140b09; /* Tầng 3 */
+    --bg-color: #5ab2e6;
+    --surface-color: #4a7c2f;
+    --earth-1: #b87a4a;
+    --earth-2: #8b5a2b;
+    --earth-3: #5e3a18;
     
     --text-main: #f5f5f7;
     --text-muted: #8b949e;
