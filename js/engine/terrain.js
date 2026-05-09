@@ -122,14 +122,31 @@ class TerrainEngine {
         const phase = (typeof window.AppInstance !== 'undefined') ? window.AppInstance.currentPhase : 0;
         const t = Date.now() / 1000;
         
-        // Phase-aware sky palette
+        // Phase-aware sky palette for 12 categories
         let skyTop, skyBot;
-        if (phase === 2 || phase === 3) {
-            // War phase — smokey daylight
+        const isWarPhase = (phase === 10 || phase === 11);
+        const isNightPhase = (phase === 4 || phase === 5 || phase === 6 || phase === 7);
+        const isSunset = (phase === 2 || phase === 9);
+        const isDawn = (phase === 3);
+        
+        if (isWarPhase) {
+            // Chiến tranh (Smoky/Red)
+            skyTop = '#5c3a21';
+            skyBot = '#8c5a45';
+        } else if (isNightPhase) {
+            // Đêm (Night)
+            skyTop = '#0a0f1c';
+            skyBot = '#1a2b4c';
+        } else if (isSunset) {
+            // Hoàng hôn (Sunset)
+            skyTop = '#c25934';
+            skyBot = '#e8a964';
+        } else if (isDawn) {
+            // Bình minh (Dawn)
             skyTop = '#7fa0b0';
-            skyBot = '#b0a080';
+            skyBot = '#d4c5a9';
         } else {
-            // Default — Bright blue sky
+            // Mặc định (Daylight) cho 0, 1, 8
             skyTop = '#5ab2e6';
             skyBot = '#bce6ff';
         }
@@ -141,7 +158,7 @@ class TerrainEngine {
         Canvas.ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, surfaceY);
         
         // Drifting clouds (only during peaceful phases)
-        if (phase !== 2 && phase !== 3 && surfaceY > 30) {
+        if (!isWarPhase && !isSunset && !isNightPhase && surfaceY > 30) {
             Canvas.ctx.save();
             Canvas.ctx.globalAlpha = 0.12;
             Canvas.ctx.fillStyle = '#c8d8c0';
@@ -172,8 +189,8 @@ class TerrainEngine {
             Canvas.ctx.restore();
         }
         
-        // War smoke billowing on horizon (phase 2 and 3)
-        if (phase === 2 || phase === 3) {
+        // War smoke billowing on horizon
+        if (isWarPhase) {
             Canvas.ctx.save();
             const smokePositions = [-600, -200, 300, 700];
             for (const sx of smokePositions) {
@@ -184,6 +201,24 @@ class TerrainEngine {
                 Canvas.ctx.beginPath();
                 Canvas.ctx.ellipse(sp.x, sp.y - 40 * CONFIG.CAMERA.zoom, 50 * CONFIG.CAMERA.zoom, 60 * CONFIG.CAMERA.zoom, 0, 0, Math.PI * 2);
                 Canvas.ctx.fill();
+            }
+            Canvas.ctx.restore();
+        }
+        
+        // Stars and Moon for Night
+        if (isNightPhase) {
+            Canvas.ctx.save();
+            Canvas.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            // Static stars based on pseudo-random hash of index
+            for(let i=0; i<100; i++) {
+                const sx = (Math.sin(i*999) * 0.5 + 0.5) * CONFIG.CANVAS_WIDTH;
+                const sy = (Math.cos(i*777) * 0.5 + 0.5) * surfaceY * 0.8;
+                Canvas.ctx.fillRect(sx, sy, 1.5, 1.5);
+            }
+            // Occasional lightning/flash
+            if (Math.random() < 0.02) {
+                Canvas.ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                Canvas.ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, surfaceY);
             }
             Canvas.ctx.restore();
         }
@@ -368,13 +403,19 @@ class TerrainEngine {
         // Draw craters on ground
         this._drawCraters(surfaceY);
 
+        const phase = (typeof window.AppInstance !== 'undefined') ? window.AppInstance.currentPhase : 0;
+        const isWarPhase = (phase === 10 || phase === 11);
+        
         // Trees
         const treePositions = [-500, -340, -150, 120, 340, 490, 680, -680, -850];
         Canvas.ctx.save();
         for (const tx of treePositions) {
             const sp = Projection.project(tx, CONFIG.DEPTHS.SURFACE, 0);
             
-            if (this.destroyedTrees.has(tx)) {
+            // In war phases, some trees are destroyed. In other phases, they are all green.
+            const isDestroyed = isWarPhase && (this.destroyedTrees.has(tx) || Math.abs(tx) % 3 === 0);
+            
+            if (isDestroyed) {
                 this._drawDestroyedTree(sp.x, sp.y, 36 * CONFIG.CAMERA.zoom);
             } else {
                 this._drawTree(sp.x, sp.y, 36 * CONFIG.CAMERA.zoom);
@@ -382,30 +423,37 @@ class TerrainEngine {
         }
         Canvas.ctx.restore();
 
-        // Grass tufts
-        Canvas.ctx.save();
-        Canvas.ctx.strokeStyle = "#4a7c2f";
-        Canvas.ctx.lineWidth = 2 * CONFIG.CAMERA.zoom;
-        for (let gx = -900; gx < 900; gx += 55) {
-            // Skip grass inside craters
-            let insideCrater = false;
-            for (const c of this.craters) {
-                if (Math.abs(gx - c.x) < c.radius) {
-                    insideCrater = true;
-                    break;
+        // Grass tufts (reduce grass in war phases)
+        if (!isWarPhase || Math.random() > 0.5) { // In war phase, don't draw some grass blocks to look barren
+            Canvas.ctx.save();
+            Canvas.ctx.strokeStyle = (phase === 1 || phase === 8) ? "#5a8c3f" : "#4a7c2f"; // Slightly different green per phase
+            if (isWarPhase) Canvas.ctx.strokeStyle = "#3a4c1f"; // Dead grass
+            
+            Canvas.ctx.lineWidth = 2 * CONFIG.CAMERA.zoom;
+            for (let gx = -900; gx < 900; gx += 55) {
+                // Skip grass inside craters
+                let insideCrater = false;
+                for (const c of this.craters) {
+                    if (Math.abs(gx - c.x) < c.radius) {
+                        insideCrater = true;
+                        break;
+                    }
+                }
+                if (insideCrater) continue;
+                
+                // In war phase, randomly skip grass tufts to make it look barren
+                if (isWarPhase && Math.abs(Math.sin(gx)) > 0.5) continue;
+                
+                const sp = Projection.project(gx, CONFIG.DEPTHS.SURFACE, 0);
+                for (let blade = -1; blade <= 1; blade++) {
+                    Canvas.ctx.beginPath();
+                    Canvas.ctx.moveTo(sp.x + blade * 6 * CONFIG.CAMERA.zoom, sp.y + 4 * CONFIG.CAMERA.zoom);
+                    Canvas.ctx.lineTo(sp.x + blade * 10 * CONFIG.CAMERA.zoom, sp.y - 10 * CONFIG.CAMERA.zoom);
+                    Canvas.ctx.stroke();
                 }
             }
-            if (insideCrater) continue;
-            
-            const sp = Projection.project(gx, CONFIG.DEPTHS.SURFACE, 0);
-            for (let blade = -1; blade <= 1; blade++) {
-                Canvas.ctx.beginPath();
-                Canvas.ctx.moveTo(sp.x + blade * 6 * CONFIG.CAMERA.zoom, sp.y + 4 * CONFIG.CAMERA.zoom);
-                Canvas.ctx.lineTo(sp.x + blade * 10 * CONFIG.CAMERA.zoom, sp.y - 10 * CONFIG.CAMERA.zoom);
-                Canvas.ctx.stroke();
-            }
+            Canvas.ctx.restore();
         }
-        Canvas.ctx.restore();
     }
     
     _drawCraters(surfaceY) {
