@@ -285,14 +285,17 @@ class TankSystem {
         ctx.translate(pos.x, pos.y);
         ctx.rotate(tank.rotation + Math.PI / 4); // Adjust for isometric
         
-        if (tank.isDestroyed) {
-            // Render destroyed tank (darker, smoking)
-            ctx.fillStyle = '#1a1a1a';
+        const phase = (typeof window.AppInstance !== 'undefined') ? window.AppInstance.currentPhase : 0;
+        const isMuseum = phase === 4;
+
+        if (tank.isDestroyed || isMuseum) {
+            // Render destroyed or rusty tank
+            ctx.fillStyle = isMuseum ? '#8b5a2b' : '#1a1a1a'; // Rusty for museum, black for destroyed
             ctx.fillRect(-tank.size.length * zoom / 2, -tank.size.width * zoom / 2,
                         tank.size.length * zoom, tank.size.width * zoom);
             
-            // Burn marks
-            ctx.fillStyle = 'rgba(50, 20, 10, 0.8)';
+            // Burn marks or rust patches
+            ctx.fillStyle = isMuseum ? 'rgba(150, 60, 20, 0.5)' : 'rgba(50, 20, 10, 0.8)';
             ctx.fillRect(-tank.size.length * zoom / 2 + 5, -tank.size.width * zoom / 2 + 5,
                         tank.size.length * zoom - 10, tank.size.width * zoom - 10);
         } else {
