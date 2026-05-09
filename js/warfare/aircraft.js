@@ -112,13 +112,13 @@ class AircraftSystem {
         // Move horizontally
         bomber.x += bomber.speed * dt * 0.06;
         
-        // Check if should drop bomb
+        // Check if should drop bomb (Disabled to keep purely visual)
         if (!bomber.bombDropped) {
             const shouldDrop = (bomber.speed > 0 && bomber.x >= bomber.bombDropX) ||
                              (bomber.speed < 0 && bomber.x <= bomber.bombDropX);
             
             if (shouldDrop) {
-                this.dropBomb(bomber);
+                // this.dropBomb(bomber);
                 bomber.bombDropped = true;
             }
         }
@@ -134,15 +134,16 @@ class AircraftSystem {
         heli.bobPhase += heli.bobSpeed * dt;
         heli.y = heli.altitude + Math.sin(heli.bobPhase) * heli.bobAmount;
         
+        // Combat actions disabled to keep purely visual
         // Occasionally fire
-        if (Math.random() < 0.0005) { // 0.05% chance per frame
-            this.helicopterFire(heli);
-        }
+        // if (Math.random() < 0.0005) { // 0.05% chance per frame
+        //     this.helicopterFire(heli);
+        // }
         
         // Occasionally drop troops
-        if (Math.random() < 0.0002) {
-            this.helicopterDropTroops(heli);
-        }
+        // if (Math.random() < 0.0002) {
+        //     this.helicopterDropTroops(heli);
+        // }
     }
     
     helicopterDropTroops(heli) {

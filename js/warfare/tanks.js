@@ -86,8 +86,9 @@ class TankSystem {
             }
             
             this.updateMovement(tank, dt);
-            this.updateFiring(tank, dt);
-            this.checkTraps(tank);
+            // Disabled firing and trap checks to keep them purely visual
+            // this.updateFiring(tank, dt);
+            // this.checkTraps(tank);
         }
     }
     
