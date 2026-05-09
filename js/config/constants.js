@@ -39,11 +39,11 @@ const CONFIG = {
 
     // Colors
     COLORS: {
-        BACKGROUND: "#0a0a0c",
-        SURFACE: "#2d4a1e",
-        EARTH_1: "#4a3728",
-        EARTH_2: "#3a2215",
-        EARTH_3: "#21100a",
+        BACKGROUND: "#5ab2e6",
+        SURFACE: "#4a7c2f",
+        EARTH_1: "#b87a4a",
+        EARTH_2: "#8b5a2b",
+        EARTH_3: "#5e3a18",
 
         // Entities
         VC_DOT:      "rgba(30, 130, 230, 0.9)",
@@ -52,8 +52,8 @@ const CONFIG = {
         DIGGER_DOT:  "rgba(255, 165,   0, 0.9)",
 
         // Structures
-        TUNNEL_WALL:  "#1a100b",
-        TUNNEL_FLOOR: "#3d2410",
+        TUNNEL_WALL:  "#e3a869",
+        TUNNEL_FLOOR: "#c27f3c",
 
         // Effects
         SMOKE:     "rgba(180,180,170,0.35)",
