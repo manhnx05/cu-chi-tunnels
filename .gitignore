@@ -18,7 +18,9 @@ Desktop.ini
 *.bak
 *.swp
 
+# PowerShell scripts (local helper scripts only)
+*.ps1
 
-# . md
+# Markdown (except README)
 *.md
-!README.md 
+!README.md
