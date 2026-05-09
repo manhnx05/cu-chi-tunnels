@@ -331,26 +331,30 @@ class App {
 
     focusOnNode(nodeId) {
         const node = LOCATIONS.find(l => l.id === nodeId);
-        if (node) {
-            // World coord: x is horizontal, y is depth (0=surface, -300=Level1, -600=Level2, -1000=Level3)
-            // Camera.x shifts screen center horizontally: targetX = -node.x centers the node
-            // Camera.y shifts screen center vertically: screenY = cy + camera.y + (-node.y * scale * zoom)
-            // To center node: camera.y should make cy + camera.y + (-node.y * scale * zoom) = CANVAS_HEIGHT/2
-            // Simplified: targetY = -node.y * scale * (targetZoom or current zoom)
-            // Use a pre-set zoom of 2.0 for the calculation
-            const scale = CONFIG.SCALE;
-            CONFIG.CAMERA.targetX = -node.x;
-            // node.y is negative for underground. -node.y is positive.
-            // We want the node to appear near vertical center. 
-            // Surface is rendered at cy = CANVAS_HEIGHT/4 when camera.y=0
-            // For underground node at y=-300: screenY = cy + camera.y + 300*scale*zoom
-            // Center at CANVAS_HEIGHT/2 means: cy + camera.y + (-node.y)*scale*zoom = CANVAS_HEIGHT/2
-            // => camera.y = CANVAS_HEIGHT/2 - cy - (-node.y)*scale*zoom
-            // But zoom changes dynamically so use approximation:
-            const approxZoom = 2.0;
-            const cy = CONFIG.CANVAS_HEIGHT / 4;
-            CONFIG.CAMERA.targetY = (CONFIG.CANVAS_HEIGHT / 2 - cy) + (-node.y) * scale * approxZoom - CONFIG.CANVAS_HEIGHT * 0.15;
-        }
+        if (!node) return;
+
+        // Project the node to see where it lands on screen at current state
+        // screenX = CX + (x + z*cos) * scale * zoom
+        // screenY = CY + (-y - z*sin) * scale * zoom
+        // where CX = CANVAS_WIDTH/2 + camera.x
+        //       CY = CANVAS_HEIGHT/4 + camera.y
+        // We want: screenX = CANVAS_WIDTH/2   => camera.x = -node.x * scale * zoom  (approx, z=0)
+        //          screenY = CANVAS_HEIGHT/2   => camera.y = CANVAS_HEIGHT/4 + node.y * scale * zoom (approx)
+        const scale = CONFIG.SCALE;
+        const zoom = 2.0; // use target zoom for calculation
+        const z = node.z || 0;
+        const cos = Math.cos(CONFIG.ISO_ANGLE);
+        const sin = Math.sin(CONFIG.ISO_ANGLE);
+
+        // Horizontal: cx + (node.x + z*cos)*scale*zoom = canvas_width/2  => camera.x = -(node.x+z*cos)*scale*zoom
+        CONFIG.CAMERA.targetX = -(node.x + z * cos) * scale * zoom;
+
+        // Vertical: cy + (-node.y - z*sin)*scale*zoom = canvas_height*0.45
+        //   cy = canvas_height/4 + camera.y
+        //   canvas_height/4 + camera.y + (-node.y - z*sin)*scale*zoom = canvas_height*0.45
+        //   camera.y = canvas_height*0.45 - canvas_height/4 - (-node.y-z*sin)*scale*zoom
+        const targetScreenY = CONFIG.CANVAS_HEIGHT * 0.45;
+        CONFIG.CAMERA.targetY = targetScreenY - CONFIG.CANVAS_HEIGHT / 4 - (-node.y - z * sin) * scale * zoom;
     }
 
     update(dt) {
@@ -361,8 +365,10 @@ class App {
         const timeScale = (typeof State !== 'undefined') ? State.get('simulation.timeScale') : 1.0;
         const scaledDt = dt * timeScale;
         
-        // Camera Lerp — fast sweep when changing phase, slow drift otherwise
-        const baseLerp = this.isSweeping ? 0.018 : 0.001;
+        // Camera Lerp — fast sweep when changing phase
+        // baseLerp is the fraction remaining per second; lower = faster
+        // At 60fps (dt≈16ms): lerpSpeed = 1 - pow(0.005, 16/1000) ≈ 0.079 per frame → ~25 frames to 85% done
+        const baseLerp = this.isSweeping ? 0.005 : 0.25;
         const lerpSpeed = 1.0 - Math.pow(baseLerp, scaledDt / 1000);
         
         CONFIG.CAMERA.x += (CONFIG.CAMERA.targetX - CONFIG.CAMERA.x) * lerpSpeed;
