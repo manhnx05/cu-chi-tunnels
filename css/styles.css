@@ -99,10 +99,13 @@ header p {
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 900px;
+    gap: 8px;
     background: linear-gradient(to right, rgba(20, 20, 24, 0.5), rgba(40, 40, 45, 0.7), rgba(20, 20, 24, 0.5));
-    padding: 14px 24px; /* Increased padding */
-    border-radius: 40px;
+    padding: 14px 24px;
+    border-radius: 20px;
     border: 1px solid var(--panel-border);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(16px);
@@ -113,11 +116,11 @@ header p {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.05);
     color: var(--text-muted);
-    padding: 14px 28px; /* Increased from 12px 24px */
-    border-radius: 30px;
+    padding: 10px 20px;
+    border-radius: 20px;
     font-family: 'Inter', sans-serif;
     font-weight: 600;
-    font-size: 15px; /* Increased from 14px */
+    font-size: 13px;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy transition */
     text-shadow: 0 2px 4px rgba(0,0,0,0.5);
