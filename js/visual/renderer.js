@@ -19,6 +19,12 @@ class RendererEngine {
         // 1. Render Environment
         Terrain.render();
 
+        // 1b. Phase-specific detail overlay
+        if (typeof PhaseDetail !== 'undefined') {
+            PhaseDetail.update(dt || 16);
+            PhaseDetail.render();
+        }
+
         // 2. Render Entities
         if (typeof EntityPoolInstance !== 'undefined') {
             EntityPoolInstance.render(
