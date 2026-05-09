@@ -103,17 +103,25 @@ class RendererEngine {
 
     renderLighting() {
         const isRealistic = (typeof State !== 'undefined') && State.get('realisticMode');
-        // Darkness is active in underground/combat phases (1, 2, 3, 5) or Realistic Mode
         const phase = (typeof window.AppInstance !== 'undefined') ? window.AppInstance.currentPhase : 0;
-        const isDarkPhase = [1, 2, 3, 5].includes(phase) || isRealistic;
         
-        if (!isDarkPhase) return;
+        // Surface phases or Overview don't have global darkness
+        const isSurfacePhase = (phase === 0 || phase === 1 || phase === 8 || phase === 10 || phase === 11);
+        if (!isRealistic && isSurfacePhase) return;
 
         Canvas.ctx.save();
         
-        // Draw full screen darkness overlay
-        // In realistic mode, the darkness is pitch black ("Black Echo")
-        Canvas.ctx.fillStyle = isRealistic ? 'rgba(0, 0, 0, 0.98)' : 'rgba(0, 0, 0, 0.85)';
+        // Determine darkness opacity based on phase
+        let alpha = 0.85; // default for underground
+        if (isRealistic) {
+            alpha = 0.98;
+        } else {
+            if (phase === 4 || phase === 5) alpha = 0.9; // Phòng họp, bệnh xá (rất tối)
+            else if (phase === 2 || phase === 3 || phase === 6) alpha = 0.75; // Hầm, bếp, xưởng (hơi sáng do có lửa/đèn)
+            else if (phase === 7 || phase === 9) alpha = 0.85; // Bẫy, thoát hiểm
+        }
+
+        Canvas.ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
         Canvas.ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
         
         // Cut out holes for lights
