@@ -21,20 +21,20 @@ const CONFIG = {
     
     // Default camera positions for cinematic phase transitions (scaled to new depth)
     CAMERA_VIEWS: [
-        { x:    0, y:    0, zoom: 1.1  }, // Phase 0: Toàn cảnh (increased for better view)
-        { x: -100, y:  200, zoom: 1.7  }, // Phase 1: Sinh hoạt (increased)
-        { x:   50, y:  450, zoom: 2.0  }, // Phase 2: Chống càn (increased)
-        { x:    0, y:   60, zoom: 1.6  }, // Phase 3: Xuất kích (increased)
-        { x: -200, y:  300, zoom: 1.8  }, // Phase 4: Di tích (increased)
-        { x:  100, y: 1400, zoom: 2.2  }  // Phase 5: Đào hầm (increased)
+        { x:    0, y:    0, zoom: 1.1  }, // Phase 0: Toàn cảnh
+        { x: -100, y:  100, zoom: 1.7  }, // Phase 1: Sinh hoạt
+        { x:   50, y:  225, zoom: 2.0  }, // Phase 2: Chống càn
+        { x:    0, y:   30, zoom: 1.6  }, // Phase 3: Xuất kích
+        { x: -200, y:  150, zoom: 1.8  }, // Phase 4: Di tích
+        { x:  100, y:  700, zoom: 2.2  }  // Phase 5: Đào hầm
     ],
 
     // World depths — 1 unit ≈ 0.5cm → 3m = 600 units
     DEPTHS: {
         SURFACE: 0,
-        LEVEL_1: -600,  // ~3m
-        LEVEL_2: -1200, // ~6m
-        LEVEL_3: -2000  // ~10m
+        LEVEL_1: -300,  // ~3m
+        LEVEL_2: -600, // ~6m
+        LEVEL_3: -1000  // ~10m
     },
 
     // Colors
