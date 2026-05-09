@@ -100,7 +100,7 @@ const LOCATIONS = [
         interiorType:"spikes", phaseActive:[0,2]
     },
     {
-        id:"kho_vu_khi", name:"Kho vũ khí đạn dược", type:"infrastructure",
+        id:"xuong_vu_khi", name:"Xưởng chế tạo vũ khí", type:"infrastructure",
         x:180, y:CONFIG.DEPTHS.LEVEL_1, z:60, icon:"🔫",
         dimensions:"4m × 2m × 1.4m", depth_label:"3m sâu", capacity:"3-5 người",
         period:"1961-1975", significance:"Huyết mạch tiếp tế vũ khí cho mặt trận",
