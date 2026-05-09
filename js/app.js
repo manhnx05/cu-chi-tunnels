@@ -3,6 +3,7 @@ class App {
         this.currentPhase = 0;
         this.isRunning = false;
         this.isPaused = false;
+        this.phaseIntervals = [];
         
         // Bind functions
         this.loop = this.loop.bind(this);
@@ -113,6 +114,8 @@ class App {
         console.log(`Switched to Phase ${phase}`);
         this.updateNarration(phase);
         
+        this.clearPhaseIntervals();
+        
         // --- Cinematic Camera Sweep ---
         if (typeof CONFIG !== 'undefined' && CONFIG.CAMERA_VIEWS && CONFIG.CAMERA_VIEWS[phase]) {
             const view = CONFIG.CAMERA_VIEWS[phase];
@@ -126,6 +129,13 @@ class App {
         
         // --- Phase Transition Flash Overlay ---
         this.showPhaseTransition(phase);
+    }
+    
+    clearPhaseIntervals() {
+        if (this.phaseIntervals) {
+            this.phaseIntervals.forEach(id => clearInterval(id));
+            this.phaseIntervals = [];
+        }
     }
     
     showPhaseTransition(phase) {
@@ -241,11 +251,11 @@ class App {
             });
             
             // Bird chirping
-            setInterval(() => {
+            this.phaseIntervals.push(setInterval(() => {
                 if (this.currentPhase === 4 && Math.random() > 0.5) {
                     AudioSys.playNatureAmbient();
                 }
-            }, 4000);
+            }, 4000));
         } else if (phase === 5) {
             AudioSys.playDiggingSound(0, 150);
             
@@ -260,7 +270,7 @@ class App {
                 }
             }
             
-            setInterval(() => {
+            this.phaseIntervals.push(setInterval(() => {
                 if (this.currentPhase === 5) {
                     AudioSys.playDiggingSound((Math.random() - 0.5) * 300, 150);
                     const s = LOCATIONS.find(l => l.id === 'lo_thong_hoi');
@@ -273,7 +283,7 @@ class App {
                         }
                     }
                 }
-            }, 2000);
+            }, 2000));
         }
     }
 
@@ -374,7 +384,7 @@ class App {
             // Screen center is 0,0 in offset terms
             // To focus, we need to shift the target so the node is near center
             CONFIG.CAMERA.targetX = -node.x;
-            CONFIG.CAMERA.targetY = node.y; // Positive shifts it up
+            CONFIG.CAMERA.targetY = -node.y; 
         }
     }
 
@@ -473,13 +483,14 @@ class App {
             Entities.update(scaledDt);
         }
         
-        // Update warfare systems (NEW - v3.0)
-        if (typeof TankSystemInstance !== 'undefined') {
-            TankSystemInstance.update(scaledDt);
-        }
-        
-        if (typeof AircraftSystemInstance !== 'undefined') {
-            AircraftSystemInstance.update(scaledDt);
+        // Update warfare systems (NEW - v3.0, only in phases 2 and 3)
+        if (this.currentPhase === 2 || this.currentPhase === 3) {
+            if (typeof TankSystemInstance !== 'undefined') {
+                TankSystemInstance.update(scaledDt);
+            }
+            if (typeof AircraftSystemInstance !== 'undefined') {
+                AircraftSystemInstance.update(scaledDt);
+            }
         }
         
         // Update simulation logic (O2, Temp, Smoke)
@@ -511,13 +522,14 @@ class App {
         
         Renderer.render(dt);
         
-        // Render warfare systems on top (NEW - v3.0)
-        if (typeof TankSystemInstance !== 'undefined') {
-            TankSystemInstance.render();
-        }
-        
-        if (typeof AircraftSystemInstance !== 'undefined') {
-            AircraftSystemInstance.render();
+        // Render warfare systems on top (NEW - v3.0, only in phases 2 and 3)
+        if (this.currentPhase === 2 || this.currentPhase === 3) {
+            if (typeof TankSystemInstance !== 'undefined') {
+                TankSystemInstance.render();
+            }
+            if (typeof AircraftSystemInstance !== 'undefined') {
+                AircraftSystemInstance.render();
+            }
         }
     }
 

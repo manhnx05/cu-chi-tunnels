@@ -417,5 +417,6 @@ class AudioEngine {
             this.dripInterval = null;
         }
     }
+}
 
 const AudioSys = new AudioEngine();
