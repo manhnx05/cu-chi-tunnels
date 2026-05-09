@@ -262,17 +262,32 @@ class RoomDetail {
                     <div class="detail-section">
                         <h3>📖 Mô Tả</h3>
                         <p id="detail-description">-</p>
+                        <button id="btn-read-description" class="audio-btn" style="margin-top:10px; width: 100%; display:flex; justify-content:center; align-items:center; gap:8px; background: rgba(255, 214, 10, 0.2); border: 1px solid rgba(255, 214, 10, 0.4); color: #ffd60a; padding: 10px; border-radius: 8px; font-weight: 600;">
+                            <span class="icon">🔊</span> Nghe thuyết minh
+                        </button>
+                    </div>
+                    <div id="detail-fact-section" class="detail-section" style="background: rgba(255, 214, 10, 0.1); border-color: #ffd60a; display:none;">
+                        <h3 style="color: #ffd60a;">💡 Bạn có biết?</h3>
+                        <p id="detail-fact" style="font-style: italic; color: #e0e0e0;"></p>
                     </div>
                     <div class="detail-section">
                         <h3>📅 Lịch Sử</h3>
                         <ul id="detail-history"></ul>
+                    </div>
+                    <div class="detail-section" id="detail-activities-section" style="display:none;">
+                        <h3>🏃 Hoạt Động Đặc Trưng</h3>
+                        <ul id="detail-activities"></ul>
+                    </div>
+                    <div class="detail-section" id="detail-flows-section" style="display:none;">
+                        <h3>🔄 Luồng Di Chuyển</h3>
+                        <div id="detail-flows" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
                     </div>
                     <div class="detail-section">
                         <h3>🏺 Đồ Vật</h3>
                         <div id="detail-objects" class="detail-objects-grid"></div>
                     </div>
                     <div class="detail-section">
-                        <h3>👤 Hoạt Động</h3>
+                        <h3>👤 Hoạt Động Chi Tiết</h3>
                         <div id="detail-people" class="detail-people-grid"></div>
                     </div>
                 </div>
@@ -309,46 +324,9 @@ class RoomDetail {
     }
     
     setupClickHandlers() {
-        // Add click handler to canvas
-        const canvas = document.getElementById('canvas');
-        if (canvas) {
-            canvas.addEventListener('click', (e) => {
-                if (this.isDetailView) return; // Don't handle clicks in detail view
-                
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                // Convert to world coordinates
-                const worldX = (x - CONFIG.CANVAS_WIDTH / 2) / CONFIG.CAMERA.zoom - CONFIG.CAMERA.x;
-                const worldY = (y - CONFIG.CANVAS_HEIGHT / 2) / CONFIG.CAMERA.zoom - CONFIG.CAMERA.y;
-                
-                // Check if clicked on a room
-                this.checkRoomClick(worldX, worldY);
-            });
-        }
+        // Click handler moved to input.js and uses accurate hover detection
     }
-    
-    checkRoomClick(worldX, worldY) {
-        // Check each location to see if click is inside
-        for (const location of LOCATIONS) {
-            if (this.roomInteriors[location.id]) {
-                // Convert 3D to 2D screen position
-                const screenPos = Projection.to2D(location.x, location.y, location.z);
-                
-                // Check if click is within room bounds (approximate)
-                const radius = 36 * CONFIG.CAMERA.zoom; // Room radius from terrain.js
-                const dx = worldX - screenPos.x;
-                const dy = worldY - screenPos.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < radius) {
-                    this.openDetailView(location.id);
-                    return;
-                }
-            }
-        }
-    }
+
     
     openDetailView(roomId) {
         const roomData = this.roomInteriors[roomId];
@@ -399,6 +377,59 @@ class RoomDetail {
             div.innerHTML = `<span class="object-icon">${obj.icon}</span><span>${obj.name}</span>`;
             objectsGrid.appendChild(div);
         });
+        
+        // Setup read button
+        const btnRead = document.getElementById('btn-read-description');
+        if (btnRead) {
+            btnRead.onclick = () => {
+                if (typeof Narrator !== 'undefined') {
+                    const desc = document.getElementById('detail-description').textContent;
+                    if (desc && desc !== '-') Narrator.speak(desc);
+                }
+            };
+        }
+        
+        // Fact
+        const factSection = document.getElementById('detail-fact-section');
+        const factText = document.getElementById('detail-fact');
+        if (locationData.fact) {
+            factText.textContent = locationData.fact;
+            factSection.style.display = 'block';
+        } else {
+            factSection.style.display = 'none';
+        }
+
+        // Activities
+        const actSection = document.getElementById('detail-activities-section');
+        const actList = document.getElementById('detail-activities');
+        if (locationData.activities && locationData.activities.length > 0) {
+            actList.innerHTML = '';
+            locationData.activities.forEach(act => {
+                const li = document.createElement('li');
+                li.textContent = act;
+                actList.appendChild(li);
+            });
+            actSection.style.display = 'block';
+        } else {
+            actSection.style.display = 'none';
+        }
+        
+        // Flows
+        const flowsSection = document.getElementById('detail-flows-section');
+        const flowsDiv = document.getElementById('detail-flows');
+        if (locationData.flows && locationData.flows.length > 0) {
+            flowsDiv.innerHTML = '';
+            locationData.flows.forEach(flow => {
+                const badge = document.createElement('span');
+                badge.className = 'flow-badge';
+                badge.style.cssText = 'background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.3); padding: 4px 10px; border-radius: 12px; font-size: 12px; color: #fff;';
+                badge.textContent = flow;
+                flowsDiv.appendChild(badge);
+            });
+            flowsSection.style.display = 'block';
+        } else {
+            flowsSection.style.display = 'none';
+        }
         
         // People
         const peopleGrid = document.getElementById('detail-people');

@@ -59,10 +59,27 @@ class UIManager {
             o2Badge = `<div class="tooltip-o2-badge ${badgeClass}">O₂ ${o2}% &nbsp;|&nbsp; ${temp}°C</div>`;
         }
         
+        // Badge Phase Active
+        let phaseBadge = '';
+        if (node.phaseActive) {
+            phaseBadge = `<span style="display:inline-block; margin-left: 10px; background: rgba(255, 214, 10, 0.2); border: 1px solid rgba(255, 214, 10, 0.5); padding: 2px 6px; border-radius: 4px; color: #ffd60a; font-size: 10px;">Phase ${node.phaseActive}</span>`;
+        }
+        
+        let activitiesHtml = '';
+        if (node.activities && node.activities.length > 0) {
+            activitiesHtml = '<ul style="margin: 8px 0 0 15px; padding: 0; font-size: 12px; color: #a0b0a0;">';
+            node.activities.slice(0, 2).forEach(act => {
+                activitiesHtml += `<li style="margin-bottom: 2px;">${act}</li>`;
+            });
+            if (node.activities.length > 2) activitiesHtml += `<li style="list-style:none; margin-left: -15px; color: #809080; font-style: italic; font-size: 10px; margin-top: 4px;">+ ${node.activities.length - 2} activities... (Click to view)</li>`;
+            activitiesHtml += '</ul>';
+        }
+        
         this.tooltip.innerHTML = `
             <h3>${node.icon || ''} ${node.name}</h3>
-            <div style="font-size:11px; color: rgba(200,180,120,0.6); margin-bottom:6px; font-family:'Roboto Mono',monospace">${depthLabel}</div>
+            <div style="font-size:11px; color: rgba(200,180,120,0.6); margin-bottom:6px; font-family:'Roboto Mono',monospace">${depthLabel}${phaseBadge}</div>
             <p style="font-size:13px; line-height:1.5">${node.description || ''}</p>
+            ${activitiesHtml}
             ${o2Badge}
         `;
         
