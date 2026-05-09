@@ -71,6 +71,12 @@ const LOCATIONS = [
             {icon:"🌾",text:"Sơ chế gạo, khoai mì, rau rừng",time:"Trước bữa ăn"},
             {icon:"🫙",text:"Bảo quản thức ăn trong hũ đất",time:"Thường xuyên"}
         ],
+        hardships: {
+            oxygen: "Trung bình (Thiếu khí do đốt lửa)",
+            temperature: "32-35°C (Nóng và ám khói)",
+            biological: "Kiến, côn trùng bị thu hút bởi thức ăn",
+            health: "Khói xông cay mắt, ngạt thở nhẹ"
+        },
         flows:[
             {toId:"lo_thong_hoi",label:"Khói thoát qua ống ngầm",type:"smoke"},
             {toId:"phong_hop",label:"Cung cấp cơm cho phòng họp",type:"supply"}
@@ -122,6 +128,12 @@ const LOCATIONS = [
             {icon:"📜",text:"Phổ biến mệnh lệnh tác chiến",time:"Trước chiến dịch"},
             {icon:"🎭",text:"Đọc thơ, kể chuyện giải trí",time:"Buổi tối"}
         ],
+        hardships: {
+            oxygen: "Thấp (Ngột ngạt khi đông người)",
+            temperature: "30-32°C (Nóng ẩm)",
+            biological: "Muỗi vằn, ẩm mốc",
+            health: "Mệt mỏi do thiếu khí, căng thẳng thần kinh"
+        },
         flows:[
             {toId:"bep_hoang_cam",label:"Nhận lương thực từ bếp",type:"supply"},
             {toId:"ham_chi_huy",label:"Nhận chỉ thị từ hầm chỉ huy",type:"command"}
@@ -143,6 +155,12 @@ const LOCATIONS = [
             {icon:"✍",text:"Soạn thảo báo cáo chiến trường",time:"Hàng ngày"},
             {icon:"🎯",text:"Phân công nhiệm vụ cho đơn vị",time:"Trước chiến dịch"}
         ],
+        hardships: {
+            oxygen: "Trung bình",
+            temperature: "28-30°C",
+            biological: "Bọ cạp, nhện độc",
+            health: "Áp lực tinh thần tột độ, mất ngủ kéo dài"
+        },
         flows:[
             {toId:"phong_hop",label:"Truyền đạt chỉ thị xuống",type:"command"},
             {toId:"benh_xa",label:"Điều phối cứu thương",type:"medical"},
@@ -163,6 +181,12 @@ const LOCATIONS = [
             {icon:"🛏",text:"Nằm điều trị trong hơi ẩm ướt",time:"24/24"},
             {icon:"📋",text:"Ghi chép hồ sơ dưới ánh đèn dầu",time:"Hàng ngày"}
         ],
+        hardships: {
+            oxygen: "Thấp (Nặng nề mùi máu và mồ hôi)",
+            temperature: "28-30°C (Ẩm ướt cao)",
+            biological: "Nguy cơ nhiễm trùng, giòi bọ, muỗi vằn",
+            health: "Đau đớn tột cùng không thuốc mê, sốt rét hoành hành ác liệt"
+        },
         flows:[
             {toId:"ham_chi_huy",label:"Báo cáo tình hình thương binh",type:"report"},
             {toId:"gieng_nuoc",label:"Lấy nước sạch để phẫu thuật",type:"supply"}
@@ -216,6 +240,12 @@ const LOCATIONS = [
             {icon:"😤",text:"Chịu đựng đói khát, bóng tối nhiều ngày",time:"Vài giờ đến vài ngày"},
             {icon:"🩹",text:"Nằm sát đất chịu chấn động B-52",time:"Trong trận bom"}
         ],
+        hardships: {
+            oxygen: "Rất thấp (Nguy hiểm tính mạng)",
+            temperature: "35-38°C (Cực kỳ ngột ngạt)",
+            biological: "Rắn rết, bóng tối mù mịt (Black Echo)",
+            health: "Ù tai, chảy máu mũi do áp suất bom, khó thở, hoảng loạn"
+        },
         flows:[{toId:"ham_chi_huy",label:"Leo lên hầm chỉ huy sau bom",type:"evacuation"}],
         fact:"Trong chiến dịch Linebacker II (1972), bom B-52 rải thảm đã san phẳng mặt đất Củ Chi — nhưng hầm này vẫn nguyên vẹn. Áp suất bên trong tăng mạnh khiến tai ù và chảy máu mũi.",
         interiorType:"bunker", phaseActive:[0,2]
@@ -231,6 +261,12 @@ const LOCATIONS = [
             {icon:"🌾",text:"Ăn củ mài, rễ cây khi hết gạo",time:"Sáng sớm"},
             {icon:"🐜",text:"Chiến đấu với chuột, mối mọt",time:"Hàng ngày"}
         ],
+        hardships: {
+            oxygen: "Thấp",
+            temperature: "28-30°C",
+            biological: "Chuột cống, mối mọt, rết",
+            health: "Suy dinh dưỡng, phù nề do thiếu chất"
+        },
         flows:[
             {toId:"bep_hoang_cam",label:"Cấp gạo, muối cho bếp",type:"supply"},
             {toId:"benh_xa",label:"Cung cấp dinh dưỡng cho thương binh",type:"supply"}

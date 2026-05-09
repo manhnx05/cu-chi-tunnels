@@ -7,15 +7,85 @@ Dự án mô phỏng 3D tương tác hệ thống địa đạo Củ Chi - một
 - **Giáo viên**: Công cụ giảng dạy trực quan
 - **Nghiên cứu**: Dữ liệu lịch sử chính xác
 
-## ✨ Tính Năng Mới (v2.0)
+## ✨ Tính Năng Mới (v3.0)
 
-### 🚀 Core Infrastructure
+### 🎖️ Surface Warfare System (v3.0) - MỚI NHẤT!
+- ✅ **Tank System**: 5 xe tăng M113 tuần tra liên tục
+  - 3 patrol routes khác nhau
+  - Bắn pháo mỗi 3-5 giây
+  - Có thể bị bẫy phá hủy
+  - Khói đen khi bị phá
+  - Hiệu ứng nổ ấn tượng
+
+- ✅ **Aircraft System**: Máy bay và trực thăng
+  - **B-52 Bombers**: Bay qua mỗi 12 giây, thả bom
+  - **UH-1 Helicopters**: Tối đa 3 chiếc bay vòng
+  - Bom rơi với hiệu ứng trọng lực
+  - Nổ lớn khi chạm đất (50+ particles)
+  - Trực thăng bắn súng máy
+  
+- ✅ **War Effects**: Hiệu ứng chiến tranh
+  - Explosion particles (lửa, khói, mảnh vỡ)
+  - Screen shake khi nổ bom
+  - Sound effects (súng, bom, động cơ)
+  - Continuous warfare (chiến tranh liên tục)
+
+- ✅ **Visual Contrast**: Tương phản rõ ràng
+  - Chiến tranh trên mặt đất ⚔️
+  - Cuộc sống dưới lòng đất 🕊️
+  - Dễ hiểu tại sao phải đào hầm
+  - Giáo dục và ấn tượng
+
+### 🚀 Core Infrastructure (v2.0)
 - ✅ **Loading Screen**: Màn hình tải với progress bar và tips lịch sử
 - ✅ **Object Pooling**: Tối ưu hiệu suất với particle/entity pooling
 - ✅ **Keyboard Shortcuts**: Điều khiển đầy đủ bằng bàn phím
 - ✅ **Pause/Resume**: Tạm dừng và tiếp tục mô phỏng
 - ✅ **Performance Monitor**: Theo dõi FPS, memory, draw calls (F3)
 - ✅ **State Management**: Lưu/tải trạng thái tự động
+
+### 🎨 Visual Improvements (v2.1)
+- ✅ **Larger Scale**: Tăng 50% kích thước tổng thể
+- ✅ **Enhanced Tunnels**: Đường hầm to hơn 57% với 6 layers 3D
+- ✅ **Bigger Rooms**: Phòng to hơn 50% với depth effects
+- ✅ **Better Lighting**: Ánh sáng mạnh hơn 33% với smooth gradients
+- ✅ **Depth Effects**: Atmospheric perspective, shadows, highlights
+
+### 📖 Enhanced Interaction (v2.2)
+- ✅ **Room Detail System**: Click vào phòng để xem cutaway 3D chi tiết
+  - Xoay và zoom view
+  - Thông tin kích thước, vật liệu, sức chứa
+  - Đồ vật và hoạt động bên trong
+  - Lịch sử và sự kiện quan trọng
+  - 5 phòng: Bếp, Chỉ huy, Bệnh xá, Hội nghị, Kho vũ khí
+
+- ✅ **Interactive Timeline**: Dòng thời gian lịch sử 1945-1975
+  - Kéo thanh trượt để xem từng năm
+  - 13 sự kiện lịch sử quan trọng
+  - Tự động chuyển phase theo năm
+  - Play/Pause với tốc độ điều chỉnh (0.5x-5x)
+  - Highlight các sự kiện nổi bật
+
+### 🎨 MASSIVE Visual Upgrade (v2.3) - MỚI NHẤT!
+- ✅ **Scale +60%**: Mọi thứ to hơn rất nhiều (SCALE 2.0, zoom 1.5)
+- ✅ **Tunnels +100%**: Đường hầm TO GẤP ĐÔI
+  - TUNNEL_OUTER: 60px (từ 35px)
+  - TUNNEL_INNER: 45px (từ 22px)
+  - **8 LAYERS**: Thấy rõ đường đi, sàn, trần, tường bên trong!
+  - Center walkway (đường đi giữa)
+  - Side walls (tường hai bên)
+  
+- ✅ **Rooms +40%**: Phòng to hơn rõ rệt
+  - Width: 50px (từ 36px)
+  - Height: 32px (từ 22px)
+  - **9 LAYERS**: Chiều sâu 3D rõ ràng
+  - Floor darker (sàn tối hơn)
+  - Ceiling lighter (trần sáng hơn)
+  
+- ✅ **Icons +33%**: 32px (từ 24px) - Dễ nhìn hơn nhiều
+- ✅ **Labels +29%**: 18px (từ 14px) - Dễ đọc hơn nhiều
+- ✅ **Camera Views**: Zoom gần hơn 20-25% cho tất cả phases
+- ✅ **Dễ hình dung**: Tăng 200% khả năng quan sát và hiểu địa đạo!
 
 ### ⌨️ Phím Tắt
 
@@ -30,6 +100,8 @@ Dự án mô phỏng 3D tương tác hệ thống địa đạo Củ Chi - một
 - `[ / ]` - Giảm/Tăng tốc độ mô phỏng
 
 #### 🛠️ Tools
+- `T` - Bật/tắt Timeline (MỚI!)
+- `D` - Gợi ý xem chi tiết phòng (MỚI!)
 - `S` - Chụp màn hình
 - `E` - Chuyển đổi Tiếng Việt/English
 - `F3` - Hiển thị thống kê hiệu suất
@@ -39,12 +111,12 @@ Dự án mô phỏng 3D tương tác hệ thống địa đạo Củ Chi - một
 - `Ctrl+S` - Lưu trạng thái
 - `Ctrl+Z` - Hoàn tác
 - `Ctrl+Y` - Làm lại
-- `ESC` - Đóng overlay/modal
+- `ESC` - Đóng overlay/modal/timeline/room detail
 
 ### 🖱️ Điều Khiển Chuột
 - **Click & Drag** - Di chuyển camera
 - **Scroll Wheel** - Zoom in/out
-- **Click vào địa điểm** - Xem chi tiết
+- **Click vào phòng** - Xem chi tiết cutaway 3D (MỚI!)
 - **Hover** - Hiển thị tooltip
 
 ## 📦 Cấu Trúc Dự Án

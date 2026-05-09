@@ -167,7 +167,6 @@ class App {
         // Trigger Phase specific visual/audio effects
         if (phase === 2) {
             AudioSys.playBombRumble();
-            Particles.triggerShake(3000, 15);
             this.focusOnNode('ham_chong'); 
             
             // Spawn Tunnel Rats using pool

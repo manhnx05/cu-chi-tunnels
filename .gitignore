@@ -17,3 +17,8 @@ Desktop.ini
 *.tmp
 *.bak
 *.swp
+
+
+# . md
+*.md
+!README.md 

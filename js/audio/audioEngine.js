@@ -310,6 +310,112 @@ class AudioEngine {
             this.heartbeatInterval = null;
         }
     }
-}
+    
+    playHeavyBreathing() {
+        if (!this.ctx || this.isMuted) return;
+        if (this.breathingInterval) return; // Already playing
+        
+        console.log("Playing heavy breathing...");
+        
+        const breathe = () => {
+            if (!this.ctx || this.isMuted) return;
+            
+            // Inhale
+            this._synthBreath(true);
+            
+            // Exhale after 1.5s
+            setTimeout(() => {
+                if (!this.ctx || this.isMuted) return;
+                this._synthBreath(false);
+            }, 1500);
+            
+            this.breathingInterval = setTimeout(breathe, 3500); // 3.5s per cycle
+        };
+        
+        breathe();
+    }
+    
+    _synthBreath(isInhale) {
+        const bufferSize = this.ctx.sampleRate * (isInhale ? 1.0 : 1.5);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * 0.5; // Soft noise
+        }
+        
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = isInhale ? 800 : 400; // Higher pitch for inhale
+        filter.Q.value = 0.5;
+        
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.3, this.ctx.currentTime + (isInhale ? 0.5 : 0.2));
+        gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + (isInhale ? 1.0 : 1.5));
+        
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        
+        noise.start();
+    }
+    
+    stopHeavyBreathing() {
+        if (this.breathingInterval) {
+            clearTimeout(this.breathingInterval);
+            this.breathingInterval = null;
+        }
+    }
+    
+    playWaterDripping() {
+        if (!this.ctx || this.isMuted) return;
+        if (this.dripInterval) return;
+        
+        const drip = () => {
+            if (!this.ctx || this.isMuted) return;
+            
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1200 + Math.random() * 500, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(2000 + Math.random() * 800, this.ctx.currentTime + 0.05);
+            
+            gain.gain.setValueAtTime(0, this.ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.5, this.ctx.currentTime + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+            
+            // Reverb effect (simple)
+            const delay = this.ctx.createDelay();
+            delay.delayTime.value = 0.15;
+            const delayGain = this.ctx.createGain();
+            delayGain.gain.value = 0.3;
+            
+            osc.connect(gain);
+            gain.connect(this.masterGain);
+            
+            gain.connect(delay);
+            delay.connect(delayGain);
+            delayGain.connect(this.masterGain);
+            
+            osc.start(this.ctx.currentTime);
+            osc.stop(this.ctx.currentTime + 0.1);
+            
+            this.dripInterval = setTimeout(drip, 1000 + Math.random() * 3000); // Random interval
+        };
+        
+        drip();
+    }
+    
+    stopWaterDripping() {
+        if (this.dripInterval) {
+            clearTimeout(this.dripInterval);
+            this.dripInterval = null;
+        }
+    }
 
 const AudioSys = new AudioEngine();

@@ -243,6 +243,19 @@ class KeyboardController {
 
         // Escape - Close modals/overlays
         this.register('escape', () => {
+            // Close room detail if open
+            if (typeof RoomDetailInstance !== 'undefined' && RoomDetailInstance.isDetailView) {
+                RoomDetailInstance.closeDetailView();
+            }
+            
+            // Close timeline if open
+            if (typeof TimelineInstance !== 'undefined') {
+                const timelineContainer = document.getElementById('timeline-container');
+                if (timelineContainer && timelineContainer.classList.contains('active')) {
+                    TimelineInstance.hide();
+                }
+            }
+            
             if (typeof State !== 'undefined') {
                 State.update({
                     'ui.showHelp': false,
@@ -252,6 +265,18 @@ class KeyboardController {
                 this.toggleHelpOverlay(false);
             }
         }, 'Close overlays');
+        
+        // Timeline Toggle
+        this.register('t', () => {
+            if (typeof TimelineInstance !== 'undefined') {
+                TimelineInstance.toggle();
+            }
+        }, 'Toggle timeline');
+        
+        // Room Detail (when hovering over a room, press D to open detail)
+        this.register('d', () => {
+            console.log('💡 Click on a room to view details');
+        }, 'View room details (click room first)');
     }
 
     toggleHelpOverlay(show) {
@@ -321,6 +346,8 @@ class KeyboardController {
                     <div>
                         <h3 style="color: #ffd60a; margin-bottom: 15px; font-size: 18px;">🛠️ Tools</h3>
                         <div style="font-family: 'Roboto Mono', monospace; font-size: 14px; line-height: 2;">
+                            <div><kbd>T</kbd> Toggle timeline</div>
+                            <div><kbd>D</kbd> Room details (hint)</div>
                             <div><kbd>S</kbd> Screenshot</div>
                             <div><kbd>E</kbd> English/Vietnamese</div>
                             <div><kbd>F3</kbd> Performance stats</div>
@@ -342,8 +369,17 @@ class KeyboardController {
                     <div style="font-family: 'Roboto Mono', monospace; font-size: 14px; line-height: 2; color: #f5f5f7;">
                         <div><strong>Click & Drag</strong> - Pan camera</div>
                         <div><strong>Scroll Wheel</strong> - Zoom in/out</div>
-                        <div><strong>Click Location</strong> - View details</div>
+                        <div><strong>Click Room</strong> - View room details (cutaway 3D)</div>
                         <div><strong>Hover</strong> - Show tooltip</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                    <h3 style="color: #ffd60a; margin-bottom: 15px; font-size: 18px;">✨ New Features (v2.2)</h3>
+                    <div style="font-family: 'Roboto Mono', monospace; font-size: 14px; line-height: 2; color: #f5f5f7;">
+                        <div><strong>📖 Room Details</strong> - Click any room to see interior cutaway view</div>
+                        <div><strong>📅 Timeline</strong> - Press T or click Timeline button to explore history</div>
+                        <div><strong>🎬 Interactive History</strong> - Scrub through 1945-1975 events</div>
                     </div>
                 </div>
                 

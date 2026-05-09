@@ -7,26 +7,26 @@ const CONFIG = {
 
     // Projection settings
     ISO_ANGLE: Math.PI / 6, // 30 degrees for isometric
-    SCALE: 1.5, // Increased from 1.0 for better visibility
+    SCALE: 2.0, // INCREASED from 1.5 for MUCH better visibility (+33%)
     CAMERA: {
         x: 0,
         y: 0, // Y offset
-        zoom: 1.2, // Increased from 0.8 for closer view
+        zoom: 1.5, // INCREASED from 1.2 for closer view (+25%)
         targetX: 0,
         targetY: 0,
-        targetZoom: 1.2,
+        targetZoom: 1.5,
         moveSpeed: 50,
         zoomSpeed: 0.2
     },
     
     // Default camera positions for cinematic phase transitions (scaled to new depth)
     CAMERA_VIEWS: [
-        { x:    0, y:    0, zoom: 0.9  }, // Phase 0: Toàn cảnh (increased from 0.65)
-        { x: -100, y:  200, zoom: 1.4  }, // Phase 1: Sinh hoạt (increased from 1.0)
-        { x:   50, y:  450, zoom: 1.6  }, // Phase 2: Chống càn (increased from 1.3)
-        { x:    0, y:   60, zoom: 1.3  }, // Phase 3: Xuất kích (increased from 0.9)
-        { x: -200, y:  300, zoom: 1.5  }, // Phase 4: Di tích (increased from 1.1)
-        { x:  100, y: 1400, zoom: 1.8  }  // Phase 5: Đào hầm (increased from 1.5)
+        { x:    0, y:    0, zoom: 1.1  }, // Phase 0: Toàn cảnh (increased for better view)
+        { x: -100, y:  200, zoom: 1.7  }, // Phase 1: Sinh hoạt (increased)
+        { x:   50, y:  450, zoom: 2.0  }, // Phase 2: Chống càn (increased)
+        { x:    0, y:   60, zoom: 1.6  }, // Phase 3: Xuất kích (increased)
+        { x: -200, y:  300, zoom: 1.8  }, // Phase 4: Di tích (increased)
+        { x:  100, y: 1400, zoom: 2.2  }  // Phase 5: Đào hầm (increased)
     ],
 
     // World depths — 1 unit ≈ 0.5cm → 3m = 600 units
