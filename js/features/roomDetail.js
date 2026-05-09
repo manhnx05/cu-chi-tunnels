@@ -484,7 +484,7 @@ class RoomDetail {
         // Draw cutaway view
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
-        const scale = 8 * this.detailZoom;
+        const scale = 24 * this.detailZoom; // Increased 3x from 8
         
         // Draw room walls (cutaway)
         ctx.save();
@@ -526,8 +526,8 @@ class RoomDetail {
             const rotX = objX * Math.cos(rotRad) - objY * Math.sin(rotRad);
             const rotY = objX * Math.sin(rotRad) + objY * Math.cos(rotRad);
             
-            // Draw object icon
-            ctx.font = '24px Arial';
+            // Draw object icon (scaled up 3x and with zoom)
+            ctx.font = `${Math.floor(72 * this.detailZoom)}px Arial`;
             ctx.fillText(obj.icon, rotX, rotY - objZ);
         });
         
@@ -541,8 +541,8 @@ class RoomDetail {
             const rotX = pX * Math.cos(rotRad) - pY * Math.sin(rotRad);
             const rotY = pX * Math.sin(rotRad) + pY * Math.cos(rotRad);
             
-            // Draw person icon
-            ctx.font = '28px Arial';
+            // Draw person icon (scaled up 3x and with zoom)
+            ctx.font = `${Math.floor(84 * this.detailZoom)}px Arial`;
             ctx.fillText(person.icon, rotX, rotY - pZ);
         });
         
