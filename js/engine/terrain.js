@@ -9,32 +9,32 @@ class TerrainEngine {
             {
                 top: CONFIG.DEPTHS.SURFACE,
                 bottom: CONFIG.DEPTHS.LEVEL_1,
-                colorTop: "#2e3d22",
-                colorBot: "#4a3728",
+                colorTop: CONFIG.COLORS.SURFACE,
+                colorBot: CONFIG.COLORS.EARTH_1,
                 label: "0m",
                 labelY: CONFIG.DEPTHS.SURFACE
             },
             {
                 top: CONFIG.DEPTHS.LEVEL_1,
                 bottom: CONFIG.DEPTHS.LEVEL_2,
-                colorTop: "#4a3728",
-                colorBot: "#3a2215",
+                colorTop: CONFIG.COLORS.EARTH_1,
+                colorBot: CONFIG.COLORS.EARTH_2,
                 label: "3m — Tầng 1",
                 labelY: CONFIG.DEPTHS.LEVEL_1
             },
             {
                 top: CONFIG.DEPTHS.LEVEL_2,
                 bottom: CONFIG.DEPTHS.LEVEL_3,
-                colorTop: "#3a2215",
-                colorBot: "#21100a",
+                colorTop: CONFIG.COLORS.EARTH_2,
+                colorBot: CONFIG.COLORS.EARTH_3,
                 label: "6m — Tầng 2",
                 labelY: CONFIG.DEPTHS.LEVEL_2
             },
             {
                 top: CONFIG.DEPTHS.LEVEL_3,
                 bottom: CONFIG.DEPTHS.LEVEL_3 - 500,
-                colorTop: "#21100a",
-                colorBot: "#0a0504",
+                colorTop: CONFIG.COLORS.EARTH_3,
+                colorBot: "#3b230d",
                 label: "10m — Tầng 3",
                 labelY: CONFIG.DEPTHS.LEVEL_3
             }
@@ -102,8 +102,8 @@ class TerrainEngine {
         };
         
         // Generate patterns once when Canvas is ready (in render to ensure ctx exists)
-        this.dirtCvs = createTexture('#4a3728', '#2a1f18', '#6b513d', false);
-        this.darkDirtCvs = createTexture('#21100a', '#0a0504', '#3d2b20', true);
+        this.dirtCvs = createTexture(CONFIG.COLORS.EARTH_1, '#8b5a2b', '#d9a066', false);
+        this.darkDirtCvs = createTexture(CONFIG.COLORS.EARTH_3, '#3b230d', '#8b5a2b', true);
     }
 
     render() {
@@ -125,17 +125,13 @@ class TerrainEngine {
         // Phase-aware sky palette
         let skyTop, skyBot;
         if (phase === 2 || phase === 3) {
-            // War phase — smoke-tinged orange-red
-            skyTop = `hsl(${10 + Math.sin(t*0.1)*5}, 45%, ${8 + Math.sin(t*0.08)*2}%)`;
-            skyBot = `hsl(${25 + Math.sin(t*0.12)*8}, 30%, ${14}%)`;
-        } else if (phase === 4) {
-            // Peace phase — blue morning sky
-            skyTop = '#0b1a2e';
-            skyBot = '#1e4a3a';
+            // War phase — smokey daylight
+            skyTop = '#7fa0b0';
+            skyBot = '#b0a080';
         } else {
-            // Default — deep jungle night
-            skyTop = '#0d1520';
-            skyBot = '#1e3a2a';
+            // Default — Bright blue sky
+            skyTop = '#5ab2e6';
+            skyBot = '#bce6ff';
         }
         
         const grad = Canvas.ctx.createLinearGradient(0, 0, 0, surfaceY);
@@ -753,7 +749,7 @@ class TerrainEngine {
 
             // Icon
             if (zoom > 0.4) {
-                const fs = Math.max(18, 32 * zoom); // INCREASED from 24 - Much larger icons (+33%)
+                const fs = Math.max(54, 96 * zoom); // INCREASED 3x for visibility
                 Canvas.ctx.font = `${fs}px serif`;
                 Canvas.ctx.textAlign = "center";
                 Canvas.ctx.textBaseline = "middle";
@@ -782,7 +778,7 @@ class TerrainEngine {
                 Canvas.ctx.shadowOffsetX = 3;
                 Canvas.ctx.shadowOffsetY = 3;
                 Canvas.ctx.fillStyle = this._labelColor(node.type);
-                Canvas.ctx.fillText(node.name, center.x, center.y + 35 * zoom); // Adjusted offset
+                Canvas.ctx.fillText(node.name, center.x, center.y + 60 * zoom); // Adjusted offset
                 
                 // Add dimensions label if it's a room
                 if (['command', 'hospital', 'kitchen', 'storage', 'room', 'printing', 'art', 'medical'].includes(node.type)) {
@@ -796,7 +792,7 @@ class TerrainEngine {
                     if (dim) {
                         Canvas.ctx.font = `600 ${labelSize * 0.75}px Inter, sans-serif`;
                         Canvas.ctx.fillStyle = 'rgba(200, 200, 200, 0.8)';
-                        Canvas.ctx.fillText(`[${dim}]`, center.x, center.y + 35 * zoom + labelSize + 2);
+                        Canvas.ctx.fillText(`[${dim}]`, center.x, center.y + 60 * zoom + labelSize + 2);
                     }
                 }
                 
